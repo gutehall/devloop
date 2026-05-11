@@ -46,10 +46,11 @@ If ambiguous, ask: "Is this code work or non-code work?"
 
 ## Path A: Code Work
 
-1. Run `linear branch <id>` to create a git branch and check it out
-2. Read the full issue description and acceptance criteria
-3. Explore relevant code (grep for symbols/files mentioned in the issue)
-4. Implement — minimal solution, follow existing patterns, no over-engineering
+1. Run `git pull` to sync the local repo before branching
+2. Run `linear branch <id>` to create a git branch and check it out
+3. Read the full issue description and acceptance criteria
+4. Explore relevant code (grep for symbols/files mentioned in the issue)
+5. Implement — minimal solution, follow existing patterns, no over-engineering
 
 ### Implementation Rules
 

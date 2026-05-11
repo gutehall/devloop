@@ -48,12 +48,13 @@ If ambiguous, ask: "Is this code work or non-code work?"
 
 ## Path A: Code Work
 
-1. Create a git branch from the issue:
+1. Run `git pull` to sync the local repo before branching
+2. Create a git branch from the issue:
    - Derive a slug from the issue summary (lowercase, spaces to dashes, strip special chars, max 50 chars)
    - Run: `git checkout -b PROJ-12-<slug>`
-2. Read the full issue description and acceptance criteria from `jira issue view PROJ-12`
-3. Explore relevant code (grep for symbols/files mentioned in the issue)
-4. Implement — minimal solution, follow existing patterns, no over-engineering
+3. Read the full issue description and acceptance criteria from `jira issue view PROJ-12`
+4. Explore relevant code (grep for symbols/files mentioned in the issue)
+5. Implement — minimal solution, follow existing patterns, no over-engineering
 
 ### Implementation Rules
 
