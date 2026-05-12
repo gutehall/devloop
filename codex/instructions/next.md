@@ -48,13 +48,15 @@ If ambiguous, ask: "Is this code work or non-code work?"
 
 ## Path A: Code Work
 
-1. Run `git pull` to sync the local repo before branching
-2. Create a git branch from the issue:
+1. Ask: "Should I branch from `main` or `develop`?" — wait for the answer before continuing
+2. Check out the chosen base branch: `git checkout <main|develop>`
+3. Run `git pull` to sync the local repo before branching
+4. Create a git branch from the issue:
    - Derive a slug from the issue summary (lowercase, spaces to dashes, strip special chars, max 50 chars)
    - Run: `git checkout -b PROJ-12-<slug>`
-3. Read the full issue description and acceptance criteria from `jira issue view PROJ-12`
-4. Explore relevant code (grep for symbols/files mentioned in the issue)
-5. Implement — minimal solution, follow existing patterns, no over-engineering
+5. Read the full issue description and acceptance criteria from `jira issue view PROJ-12`
+6. Explore relevant code (grep for symbols/files mentioned in the issue)
+7. Implement — minimal solution, follow existing patterns, no over-engineering
 
 ### Implementation Rules
 

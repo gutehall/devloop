@@ -46,11 +46,13 @@ If ambiguous, ask: "Is this code work or non-code work?"
 
 ## Path A: Code Work
 
-1. Run `git pull` to sync the local repo before branching
-2. Run `linear branch <id>` to create a git branch and check it out
-3. Read the full issue description and acceptance criteria
-4. Explore relevant code (grep for symbols/files mentioned in the issue)
-5. Implement — minimal solution, follow existing patterns, no over-engineering
+1. Ask: "Should I branch from `main` or `develop`?" — wait for the answer before continuing
+2. Check out the chosen base branch: `git checkout <main|develop>`
+3. Run `git pull` to sync the local repo before branching
+4. Run `linear branch <id>` to create a git branch and check it out
+5. Read the full issue description and acceptance criteria
+6. Explore relevant code (grep for symbols/files mentioned in the issue)
+7. Implement — minimal solution, follow existing patterns, no over-engineering
 
 ### Implementation Rules
 
