@@ -1,6 +1,6 @@
 # Vision Protocol
 
-A structured thinking protocol for strategic future planning. Run this when exploring where a project should go over a 1–5 year horizon.
+A structured thinking protocol for strategic future planning. Run this when exploring where a project should go over a 1–3 year horizon.
 
 ---
 
@@ -86,19 +86,6 @@ Push the user here. "More features" is not a 3-year horizon. Ask: *What fundamen
 
 Output: 2–3 scenarios for the 3-year state. Identify which one the team is currently pointed at, and whether that's intentional.
 
-### 5-Year Horizon
-
-*The long view. High uncertainty, high stakes.*
-
-- In the best case, what is this project? What has it become?
-- What's the version that would genuinely surprise people?
-- What would the project have to sacrifice or change to reach that?
-- What bets would have to pay off for the 5-year vision to be real?
-
-Be careful here: the 5-year horizon is where wishful thinking creeps in. Push back with: *What would have to be true for that to happen?* and *What's the scenario where this goes the other way?*
-
-Output: One ambitious but coherent 5-year picture, with the key assumptions named explicitly.
-
 ---
 
 ## Phase 4: Strategic Bets
@@ -106,7 +93,7 @@ Output: One ambitious but coherent 5-year picture, with the key assumptions name
 A strategy is a set of *choices*. Not everything can be important. This phase forces prioritization.
 
 Ask:
-- Given the three horizons, what are the 2–4 things this project is *committing to*?
+- Given the two horizons, what are the 2–4 things this project is *committing to*?
 - What is this project *not* doing — and is that explicit or just neglect?
 - Which bets are load-bearing? (Things that, if wrong, change the whole picture.)
 - Which bets are reversible? (Things you can walk back if they don't work.)
@@ -119,7 +106,7 @@ Output: A short list of named bets with rationale. Explicitly note which are loa
 
 ## Phase 5: Capability Gaps
 
-The gap between the current state and the 3–5 year horizon reveals what would need to be built, hired, or decided.
+The gap between the current state and the 3-year horizon reveals what would need to be built, hired, or decided.
 
 For each horizon gap:
 - What technical capabilities don't exist yet that would be required?
@@ -129,7 +116,7 @@ For each horizon gap:
 
 Don't just list features. Capability gaps include: architecture decisions, missing integrations, team skills, operational maturity, and even product-market positioning.
 
-Output: A prioritized list of gaps, roughly categorized by: *must close in 1yr*, *need in 1–3yr*, *need by 5yr*.
+Output: A prioritized list of gaps, roughly categorized by: *must close in 1yr*, *need by 3yr*.
 
 ---
 
@@ -184,7 +171,6 @@ After working through the phases, produce:
 
 **1 year:** [Concrete, achievable state. One paragraph.]
 **3 years:** [The bigger shift. What's fundamentally different. One paragraph.]
-**5 years:** [The ambitious version. What the bets would have to pay off to. One paragraph.]
 
 ### Strategic bets
 | Bet | Rationale | Type |
@@ -194,7 +180,6 @@ After working through the phases, produce:
 ### Capability gaps
 **Close in 1yr:** [...]
 **Need by 3yr:** [...]
-**Need by 5yr:** [...]
 
 ### Improvement themes
 1. [Theme] — [why it matters long-term]
@@ -220,7 +205,7 @@ A vision session is not a hype exercise. These standards apply throughout:
 - **Don't agree to be agreeable.** If the user's stated direction seems misaligned with the evidence, say so.
 - **Uncertainty is honest output.** "We don't know" is a valid and important finding.
 - **Specificity over generality.** "Better UX" is not a strategic direction. "Reduce the time to first value from 30 minutes to under 5" is.
-- **Short-term and long-term are different conversations.** Keep them separate. Don't let quarterly pressures collapse the 5-year view.
+- **Short-term and long-term are different conversations.** Keep them separate. Don't let quarterly pressures collapse the 3-year view.
 
 ---
 

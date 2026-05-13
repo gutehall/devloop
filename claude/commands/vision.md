@@ -1,6 +1,6 @@
 # /vision - Strategic future planning for a project
 
-Facilitate a deep, honest conversation about where the project is heading — 1 year, 3 years, 5 years out. Surface logical next steps, identify capability gaps, and produce a strategic view worth acting on.
+Facilitate a deep, honest conversation about where the project is heading — 1 year and 3 years out. Surface logical next steps, identify capability gaps, and produce a strategic view worth acting on.
 
 ## Usage
 
@@ -40,7 +40,7 @@ Follow the full vision skill protocol:
 
 The skill walks through:
 - Grounding questions to establish the current position
-- Horizon mapping: 1yr / 3yr / 5yr
+- Horizon mapping: 1yr / 3yr
 - Forces of change: technology, users, competition, regulation
 - Capability gaps: what would need to exist
 - Strategic bets: which futures to commit to
@@ -63,13 +63,12 @@ At the end of the conversation, produce a structured vision document:
 
 **1 year:** [What the project looks like. What's been built. What users can do.]
 **3 years:** [The bigger shift. What new capabilities exist. What's changed about the user or market.]
-**5 years:** [The ambitious version. What this could become if the bets pay off.]
 
 ### Strategic bets
 [2–4 things we're committing to. Each with a one-sentence rationale.]
 
 ### Capability gaps
-[What doesn't exist yet that would be required to reach the 3yr or 5yr horizon]
+[What doesn't exist yet that would be required to reach the 3yr horizon]
 
 ### Improvement themes
 [Cross-cutting areas — architecture, UX, performance, reliability — worth addressing at any horizon]
@@ -95,6 +94,6 @@ End with:
 - Don't converge prematurely. If the answer feels obvious, look for what's being ignored.
 - Challenge assumptions. Ask "what would have to be true for that to happen?"
 - Surface the risks. A future without risks is not honest strategy.
-- One horizon at a time. Don't let all three collapse into a blur.
+- One horizon at a time. Don't let the two collapse into a blur.
 - Keep the conversation moving — short exchanges are better than walls of text
 - The vision document is the deliverable, not the conversation

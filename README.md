@@ -255,7 +255,7 @@ A structured conversation to think through what you actually want to build and w
 /vision "compete with X"         # Explore competitive positioning
 ```
 
-Deep, honest conversation about where the project is heading on 1 / 3 / 5 year horizons. Reads current state (open projects, `product.md`, README, recent git log), then works through forces of change, capability gaps, strategic bets, and assumption stress-tests. Produces a structured vision document with a "next planning horizon" section that hands off to `/plan`. No tracker writes during the session.
+Deep, honest conversation about where the project is heading on 1 and 3 year horizons. Reads current state (open projects, `product.md`, README, recent git log), then works through forces of change, capability gaps, strategic bets, and assumption stress-tests. Produces a structured vision document with a "next planning horizon" section that hands off to `/plan`. No tracker writes during the session.
 
 ### `/plan` — Plan work and create issues
 
