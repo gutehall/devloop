@@ -58,7 +58,7 @@ Decompose an L or XL issue into smaller, independently trackable sub-issues. Alw
    ```
    Update parent estimate to XL if not already set.
 
-7. **Offer to start the first unblocked sub-issue:** "Run `/start ISSUE-13` to begin."
+7. **Offer to start the first unblocked sub-issue:** "Run `/next ISSUE-13` to begin."
 
 ## Notes
 

@@ -28,11 +28,10 @@ The daily-driver variant. Linear MCP + the `linear` CLI for issue tracking, `gh`
 - `/done` — commit, push, PR, watch CI, merge, pull main; closes the Linear issue via `Closes FIN-X`
 - `/think`, `/vision` — reason through a problem or set strategic direction before planning
 - `/plan` — create Linear issues inline via MCP, with acceptance criteria
-- `/start`, `/pr`, `/blocked`, `/work` — alternative entry points and PR-only flows
+- `/pr` — open a PR for review without merging
 - `/issues`, `/triage`, `/estimate`, `/split`, `/scope` — backlog browsing and grooming
 - `/bugs`, `/debt`, `/deps` — scan the codebase and create Linear issues
-- `/review`, `/sync`, `/retro`, `/whatchanged`, `/release` — review, sprint, and ship cycles
-- `/onboard` — orient in an unfamiliar codebase
+- `/review`, `/sync`, `/whatchanged`, `/release` — review and ship cycles
 - `/diagnose`, `/sit` — structured thinking before/during work
 
 How it talks to Linear: Linear's hosted MCP server (`mcp.linear.app`) gives Claude structured access to issues, projects, cycles, comments, and documents. The `linear` CLI handles the things the MCP doesn't cover (branch creation, quick `--unblocked` listings).
@@ -51,7 +50,7 @@ Same loop, different tracker. The Atlassian MCP server + the `jira` CLI for issu
 /standup → /next → implement → /done → /next → repeat
 ```
 
-The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/think`, `/vision`, `/plan`, `/start`, `/pr`, `/blocked`, `/work`, `/issues`, `/triage`, `/estimate`, `/split`, `/scope`, `/bugs`, `/debt`, `/deps`, `/review`, `/sync`, `/retro`, `/whatchanged`, `/release`, `/onboard`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
+The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/think`, `/vision`, `/plan`, `/pr`, `/issues`, `/triage`, `/estimate`, `/split`, `/scope`, `/bugs`, `/debt`, `/deps`, `/review`, `/sync`, `/whatchanged`, `/release`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
 
 **Key behavior differences vs Linear:**
 
@@ -286,15 +285,6 @@ For non-code work (documents, decks, research): closes the issue directly, optio
 
 Yesterday / Today (in progress) / Blocked, plus recent commits and merged PRs. On Monday, the lookback extends to 3 days to cover the weekend.
 
-### `/start` — Set up a known issue without implementing
-
-```
-/start            # Pick from unblocked issues
-/start FIN-12     # Start a specific issue
-```
-
-Assigns to you, marks In Progress, creates the branch, shows the issue — then hands control back. Unlike `/next`, it doesn't start coding.
-
 ### `/pr` — Open a pull request for current work
 
 ```
@@ -304,25 +294,6 @@ Assigns to you, marks In Progress, creates the branch, shows the issue — then 
 ```
 
 Stages, commits, pushes, creates a PR with `Closes <ID>`. Use this when you want a teammate to review before merging.
-
-### `/blocked` — Mark an issue as blocked
-
-```
-/blocked                     # Block the current issue
-/blocked FIN-12              # Block a specific issue
-/blocked FIN-12 FIN-99       # FIN-12 is blocked by FIN-99
-```
-
-Links to an existing blocker, or creates a new urgent blocker. Blocked issues drop off the `/next` shortlist automatically.
-
-### `/work` — Plan and start immediate work, no ticket required
-
-```
-/work "add rate limiting to the API"
-/work
-```
-
-Frames the problem, proposes an approach, creates a descriptive git branch, and starts implementing immediately. If scope grows mid-implementation, `/work` flags it and offers to promote it to a tracked issue.
 
 ### `/estimate` — Bulk-estimate unestimated issues
 
@@ -350,7 +321,7 @@ Looks for unclear issues, unestimated issues, orphaned issues, scope gaps, overs
 /split            # Split the current issue (detected from branch)
 ```
 
-Proposes 3–5 sub-issues with estimates and dependency ordering, creates them with `--parent` and `--blocked-by` set correctly, then offers `/start` for the first one.
+Proposes 3–5 sub-issues with estimates and dependency ordering, creates them with `--parent` and `--blocked-by` set correctly, then offers `/next` for the first one.
 
 ### `/issues` — Browse and filter issues by project
 
@@ -417,17 +388,6 @@ Shows PR description, CI status, full diff. Summarizes changes and issues spotte
 
 Detects merged PRs with open issues, stale in-progress issues with no branch, closed PRs. Useful after time off or sprint boundaries.
 
-### `/retro` — Sprint retrospective
-
-```
-/retro              # Last 2 weeks (or last completed cycle)
-/retro 1w           # Last week
-/retro 3w           # Last 3 weeks
-/retro 2024-01-01   # Since a specific date
-```
-
-Shipped / Slipped / Never started / Blocked / Velocity. Optionally creates issues for action items.
-
 ### `/whatchanged` — Management progress report
 
 ```
@@ -446,15 +406,6 @@ Reads a checkpoint at `.claude/whatchanged`, pulls issues that shipped/started/a
 ```
 
 Finds the last git tag, gathers merged PRs and commits since, categorizes (Breaking / Features / Fixes / Performance / Docs / Chores), determines semver, creates the tag, runs `gh release create`. Optionally prepends to CHANGELOG.md.
-
-### `/onboard` — Orient in an unfamiliar codebase
-
-```
-/onboard            # Print orientation to chat
-/onboard --save     # Also write ONBOARDING.md to project root
-```
-
-Discovers the stack, maps top-level directories, identifies entry points, extracts patterns (imports, error handling, config, data layer), and surfaces gotchas.
 
 ### `/diagnose` — Root-cause a bug before touching any code
 

@@ -46,7 +46,7 @@ Decompose an L or XL issue into smaller, independently trackable child issues. A
    ```
    Update the parent priority to Highest if not already, to signal it's a large initiative.
 
-7. **Offer to start the first unblocked child issue:** "Run `/start PROJ-13` to begin."
+7. **Offer to start the first unblocked child issue:** "Run `/next PROJ-13` to begin."
 
 ## Notes
 
