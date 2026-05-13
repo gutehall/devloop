@@ -1,15 +1,15 @@
 # DevLoop
 
-This repo contains two workflow variants:
+This repo contains two workflow variants — both powered by Claude Code, differing only by issue tracker:
 
-| Variant | AI tool | Issue tracker | Directory |
-|---------|---------|--------------|-----------|
-| **Claude + Linear** | [Claude Code](https://claude.ai/code) | [Linear](https://linear.app) | `claude/` |
-| **Codex + Jira** | [OpenAI Codex](https://github.com/openai/codex) | [Jira](https://www.atlassian.com/software/jira) | `codex/` |
+| Variant | Issue tracker | Directory |
+|---------|--------------|-----------|
+| **Claude + Linear** (primary) | [Linear](https://linear.app) | `claude/` |
+| **Claude + Jira** | [Jira](https://www.atlassian.com/software/jira) | `claude-jira/` |
 
 Both implement the same loop: pick issue → branch → implement → PR → merge → repeat.
 
-See [Codex + Jira setup](#codex--jira) for the Jira variant.
+See [Claude + Jira setup](#claude--jira) for the Jira variant.
 
 ---
 
@@ -800,22 +800,24 @@ L/XL issues should be split into sub-issues before work begins.
 
 ---
 
-## Codex + Jira
+## Claude + Jira
 
-Same workflow, different tools. Instructions live in `codex/`.
+Same workflow, same AI tool, different issue tracker. Commands live in `claude-jira/`. Use this variant if your team is on Jira instead of Linear.
 
 ### Installation
 
-**1. Get the instructions**
+**1. Get the commands**
 
 ```bash
 # Per-project
-cp -r codex /path/to/your/project/.codex
+cp -r claude-jira /path/to/your/project/.claude
 
 # Global
-cp codex/instructions/* ~/.codex/instructions/
-cp -r codex/skills/* ~/.codex/skills/
+cp claude-jira/commands/* ~/.claude/commands/
+cp -r claude-jira/skills/* ~/.claude/skills/
 ```
+
+Use one variant per project — install either `claude/` (Linear) or `claude-jira/` (Jira), not both.
 
 **2. Jira CLI**
 
@@ -872,9 +874,9 @@ Install the Jira GitHub app in your Jira workspace. Once connected, PRs that inc
 | `/diagnose` | Root-cause a bug before writing any fix |
 | `/sit` | Stop, Inspect, Think — mid-task self-audit |
 
-### Key Differences from Claude + Linear
+### Key Differences Between the Two Variants
 
-| | Claude + Linear | Codex + Jira |
+| | Claude + Linear | Claude + Jira |
 |---|---|---|
 | Branch creation | `linear branch ISSUE-1` | `git checkout -b PROJ-1-slug` |
 | Start issue | `linear issue start` | `jira issue move + jira issue assign` |
@@ -882,3 +884,4 @@ Install the Jira GitHub app in your Jira workspace. Once connected, PRs that inc
 | Sprints | Cycles + milestones | `jira sprint list/add` |
 | Grouping | Projects | Epics |
 | Priorities | urgent/high/medium/low | Highest/High/Medium/Low/Lowest |
+| Issue tracker integration | Linear MCP + CLI | Jira CLI only |

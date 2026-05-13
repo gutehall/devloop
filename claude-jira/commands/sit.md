@@ -1,6 +1,6 @@
 # SIT — Stop, Inspect, Think
 
-A structured pause protocol for Codex. When invoked, Codex stops all forward momentum and performs a honest self-audit before deciding whether to continue, correct course, or ask for clarification.
+A structured pause protocol for Claude Code. When invoked, Claude stops all forward momentum and performs a honest self-audit before deciding whether to continue, correct course, or ask for clarification.
 
 ---
 

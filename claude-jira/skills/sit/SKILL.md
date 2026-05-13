@@ -1,6 +1,6 @@
 ---
 name: sit
-description: Forces Codex to pause, reflect, and honestly assess whether the current approach is correct before continuing. Use this skill whenever the user says "sit", "pause and think", "wait, stop", "take a step back", "are you sure about this?", "rethink what you're doing", or any phrase that signals they want Codex to stop and self-audit rather than keep going. Also trigger proactively when many tool calls have been made without user confirmation, when something unexpected has happened, when the task has grown more complex than anticipated, or before any destructive/hard-to-reverse action.
+description: Forces Claude Code to pause, reflect, and honestly assess whether the current approach is correct before continuing. Use this skill whenever the user says "sit", "pause and think", "wait, stop", "take a step back", "are you sure about this?", "rethink what you're doing", or any phrase that signals they want Claude to stop and self-audit rather than keep going. Also trigger proactively when many tool calls have been made without user confirmation, when something unexpected has happened, when the task has grown more complex than anticipated, or before any destructive/hard-to-reverse action.
 ---
 
 # SIT Skill

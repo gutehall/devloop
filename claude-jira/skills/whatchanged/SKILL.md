@@ -66,7 +66,7 @@ gh pr list --state merged --json number,title,mergedAt,author,body --limit 50
 
 Filter client-side to `mergedAt` > `<timestamp>`.
 
-For each merged PR, check whether its title or body contains a Jira issue ID (e.g. `PROJ-42`, `Closes PROJ-42`). PRs that reference a Jira issue are already covered by the Jira section — do not double-count them. PRs with **no Jira issue reference** are untracked work done directly in Codex or outside the issue tracker.
+For each merged PR, check whether its title or body contains a Jira issue ID (e.g. `PROJ-42`, `Closes PROJ-42`). PRs that reference a Jira issue are already covered by the Jira section — do not double-count them. PRs with **no Jira issue reference** are untracked work done directly in Claude Code or outside the issue tracker.
 
 If `gh` is unavailable: skip silently and note at the bottom.
 
