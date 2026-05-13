@@ -1,4 +1,4 @@
-# Linear Workflow with Claude Code
+# DevLoop
 
 This repo contains two workflow variants:
 
