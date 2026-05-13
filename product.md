@@ -22,7 +22,7 @@ Primary concern: minimal friction between having an idea and shipping code. User
 
 | Layer | Claude + Linear | Claude + Jira |
 |-------|----------------|---------------|
-| Issue tracking | Linear MCP + `linear` CLI | `jira` CLI only |
+| Issue tracking | Linear MCP + `linear` CLI | Atlassian MCP + `jira` CLI |
 | Branch creation | `linear branch <id>` | `git checkout -b PROJ-12-slug` |
 | PR creation | `gh pr create` | `gh pr create` |
 | Directory | `claude/` | `claude-jira/` |
@@ -33,7 +33,7 @@ Primary concern: minimal friction between having an idea and shipping code. User
 
 **Skills** (`claude/skills/`, `claude-jira/skills/`) are reusable methodology modules. A command invokes a skill by name (e.g. "follow the product-planning skill"). Skills have YAML frontmatter so the AI can route to them. Some skills have a companion file (e.g. `sit/sit.md`) for the detailed protocol; the `SKILL.md` frontmatter is the entry point.
 
-**Key constraint:** there is no Jira MCP server equivalent to `mcp.linear.app` at the time of writing, which is why the Linear variant uses `mcp__claude_ai_Linear__*` for richer integration while the Jira variant is CLI-only.
+Both variants combine an MCP server (`mcp.linear.app` / `mcp.atlassian.com`) with a CLI (`linear` / `jira`). The MCP gives Claude structured read access; the CLI handles writes the MCP doesn't cover (branch creation, status transitions, sprint operations).
 
 ## Roadmap
 
@@ -58,6 +58,6 @@ No versioned roadmap. Goals in order of priority:
 
 | Item | Why deferred |
 |------|-------------|
-| MCP integration for Jira variant | No Jira MCP server equivalent to `mcp.linear.app` at time of writing |
+| Rewrite `claude-jira/` commands to call Atlassian MCP tools directly | MCP is registered for reads; commands still shell out to `jira` CLI. Migrating per-command would mirror the Linear pattern but is a separate piece of work. |
 | Automated testing of commands | Commands are AI prompt files — no unit test framework applies; validation is manual (install + run in a test project) |
 | Versioning / changelog for the toolkit itself | Low priority; users pull latest from git rather than pinning versions |

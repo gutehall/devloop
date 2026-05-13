@@ -9,7 +9,7 @@ Two parallel sets of workflow automation — both powered by Claude Code, differ
 | Variant | Directory | Issue tracker | Commands location |
 |---------|-----------|--------------|-------------------|
 | Claude + Linear (primary) | `claude/` | Linear (via MCP + CLI) | `claude/commands/` |
-| Claude + Jira | `claude-jira/` | Jira (via CLI) | `claude-jira/commands/` |
+| Claude + Jira | `claude-jira/` | Jira (via Atlassian MCP + CLI) | `claude-jira/commands/` |
 
 Linear is the daily-driver variant. The Jira variant exists so teams on Jira can adopt the same loop with the same AI tool.
 
@@ -52,22 +52,28 @@ allowed-tools: Bash(linear:*), Bash(gh:*)  # optional tool restrictions
 ---
 ```
 
-## MCP tool names (Claude + Linear only)
+## MCP tool names
 
-Commands in `claude/` reference Linear MCP tools by name. The README setup registers the server as:
+Each variant registers its own MCP server:
 
 ```bash
+# Linear variant
 claude mcp add --transport http linear-server https://mcp.linear.app/mcp
+# → tool prefix: mcp__claude_ai_Linear__
+
+# Jira variant
+claude mcp add --transport sse atlassian-server https://mcp.atlassian.com/v1/sse
+# → tool prefix: mcp__claude_ai_Atlassian__
 ```
 
-This produces the prefix `mcp__claude_ai_Linear__` (e.g. `mcp__claude_ai_Linear__list_issues`). If the server was registered under a different name, all references in `claude/commands/` and `claude/skills/` must be updated to match.
+If a server is registered under a different name, all references in the corresponding `commands/` and `skills/` directories must be updated to match.
 
-The Jira variant (`claude-jira/`) uses the `jira` CLI only — no MCP — because there is no Jira MCP server equivalent at the time of writing.
+The Atlassian MCP gives Claude richer read access for Jira (search issues, fetch comments, follow links). The `jira` CLI is still required for writes that the MCP doesn't cover (status transitions, branch creation, sprint management).
 
 ## Key differences between the two variants
 
-- `claude/` commands use both MCP tools (`mcp__claude_ai_Linear__*`) and the `linear` CLI for issue management
-- `claude-jira/` commands use only the `jira` CLI — no MCP
+- `claude/` uses Linear MCP (`mcp__claude_ai_Linear__*`) + the `linear` CLI
+- `claude-jira/` uses Atlassian MCP (`mcp__claude_ai_Atlassian__*`) + the `jira` CLI
 - Both reference `gh` for GitHub
 - Skills are largely identical between variants; the only structural difference is `linear-cli` (in `claude/`) vs `jira-cli` (in `claude-jira/`)
 

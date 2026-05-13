@@ -26,10 +26,13 @@ The daily-driver variant. Linear MCP + the `linear` CLI for issue tracking, `gh`
 - `/standup` — yesterday / today / blocked, from Linear + GitHub
 - `/next` — pick an unblocked issue, branch, start work
 - `/done` — commit, push, PR, watch CI, merge, pull main; closes the Linear issue via `Closes FIN-X`
+- `/think`, `/vision` — reason through a problem or set strategic direction before planning
 - `/plan` — create Linear issues inline via MCP, with acceptance criteria
+- `/start`, `/pr`, `/blocked`, `/work` — alternative entry points and PR-only flows
+- `/issues`, `/triage`, `/estimate`, `/split`, `/scope` — backlog browsing and grooming
 - `/bugs`, `/debt`, `/deps` — scan the codebase and create Linear issues
-- `/triage`, `/estimate`, `/split`, `/scope` — backlog grooming
-- `/retro`, `/whatchanged`, `/release` — sprint and ship cycles
+- `/review`, `/sync`, `/retro`, `/whatchanged`, `/release` — review, sprint, and ship cycles
+- `/onboard` — orient in an unfamiliar codebase
 - `/diagnose`, `/sit` — structured thinking before/during work
 
 How it talks to Linear: Linear's hosted MCP server (`mcp.linear.app`) gives Claude structured access to issues, projects, cycles, comments, and documents. The `linear` CLI handles the things the MCP doesn't cover (branch creation, quick `--unblocked` listings).
@@ -40,7 +43,7 @@ How it talks to Linear: Linear's hosted MCP server (`mcp.linear.app`) gives Clau
 
 ## Claude + Jira
 
-Same loop, different tracker. The `jira` CLI for issue tracking, `gh` for GitHub. No MCP in this variant — Claude Code shells out to `jira` directly.
+Same loop, different tracker. The Atlassian MCP server + the `jira` CLI for issue tracking, `gh` for GitHub.
 
 **Daily loop:**
 
@@ -48,7 +51,7 @@ Same loop, different tracker. The `jira` CLI for issue tracking, `gh` for GitHub
 /standup → /next → implement → /done → /next → repeat
 ```
 
-The command set mirrors Claude + Linear — `/next`, `/done`, `/plan`, `/standup`, `/bugs`, `/debt`, `/deps`, `/triage`, `/estimate`, `/split`, `/scope`, `/retro`, `/whatchanged`, `/release`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
+The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/think`, `/vision`, `/plan`, `/start`, `/pr`, `/blocked`, `/work`, `/issues`, `/triage`, `/estimate`, `/split`, `/scope`, `/bugs`, `/debt`, `/deps`, `/review`, `/sync`, `/retro`, `/whatchanged`, `/release`, `/onboard`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
 
 **Key behavior differences vs Linear:**
 
@@ -60,7 +63,7 @@ The command set mirrors Claude + Linear — `/next`, `/done`, `/plan`, `/standup
 | Sprints | Cycles + milestones | `jira sprint list/add` |
 | Grouping | Projects | Epics |
 | Priorities | Urgent / High / Medium / Low | Highest / High / Medium / Low / Lowest |
-| Tracker integration | Linear MCP + CLI | Jira CLI only |
+| Tracker integration | Linear MCP + CLI | Atlassian MCP + Jira CLI |
 
 [Skip to installation →](#claude--jira-installation)
 
@@ -156,14 +159,24 @@ jira init
 
 `jira init` prompts for your Jira server URL, email, and API token (generate one at <https://id.atlassian.com/manage-profile/security/api-tokens>), then asks which project and board to default to.
 
-### 3. GitHub CLI
+### 3. Atlassian MCP server
+
+```bash
+claude mcp add --transport sse atlassian-server https://mcp.atlassian.com/v1/sse
+```
+
+Then run `/mcp` once you've opened a Claude Code session to go through the OAuth flow — Atlassian opens in your browser, you grant access to the Jira site, and the token is stored.
+
+The Atlassian MCP gives Claude richer access for reads (search issues, fetch comments, follow links across projects/boards) than the CLI alone. The slash commands in `claude-jira/` still use the `jira` CLI for writes (status moves, assignments, branch creation), so both are required.
+
+### 4. GitHub CLI
 
 ```bash
 brew install gh
 gh auth login
 ```
 
-### 4. GitHub-Jira integration (optional)
+### 5. GitHub-Jira integration (optional)
 
 Install the Jira GitHub app in your Jira workspace. Once connected, PRs that include `Closes PROJ-42` in the body auto-transition the issue to Done on merge. Without it, run `jira issue move PROJ-42 "Done"` manually after merge.
 
@@ -224,6 +237,26 @@ Conventions: examples use Linear issue IDs like `FIN-12`. Substitute `PROJ-12` f
 ```
 
 Marks the issue In Progress, creates a git branch (`fin-42-add-caching-layer`), reads the issue, explores relevant code, and begins implementation. Run `!git checkout main && git pull` first — `/next` branches off current HEAD.
+
+### `/think` — Reason through a problem before planning
+
+```
+/think                        # Open-ended exploration
+/think "Add X feature"        # Focused reasoning about a specific idea
+```
+
+A structured conversation to think through what you actually want to build and why — before creating any issues. No tracker reads or writes. Asks grounding questions (what's the problem, who's affected, what does good look like), explores the space (why now, simplest version, what could go wrong, alternatives, what's out of scope), then synthesizes a brief you can hand straight to `/plan`.
+
+### `/vision` — Strategic future planning for a project
+
+```
+/vision                          # Open-ended future exploration
+/vision "1 year"                 # Focus on the near-term horizon
+/vision "scale"                  # Explore a strategic theme
+/vision "compete with X"         # Explore competitive positioning
+```
+
+Deep, honest conversation about where the project is heading on 1 / 3 / 5 year horizons. Reads current state (open projects, `product.md`, README, recent git log), then works through forces of change, capability gaps, strategic bets, and assumption stress-tests. Produces a structured vision document with a "next planning horizon" section that hands off to `/plan`. No tracker writes during the session.
 
 ### `/plan` — Plan work and create issues
 
@@ -440,16 +473,3 @@ Reads the full error, generates at least 3 mechanical hypotheses with evidence f
 
 Stops forward momentum, inspects what's been done, thinks through whether the approach is still right, decides Continue / Correct course / Ask / Stop and report. Trigger automatically after many tool calls without confirmation, when something unexpected happens, before a destructive action, or when scope has grown beyond what was asked.
 
----
-
-# Estimate Sizes
-
-| Size | Meaning |
-|------|---------|
-| XS | Trivial, < 1 hour |
-| S | Small, a couple hours |
-| M | Medium, about a day |
-| L | Large, multi-day — consider breaking down |
-| XL | Very large — break down before starting |
-
-L/XL issues should be split into sub-issues before work begins.
