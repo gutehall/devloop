@@ -1,102 +1,171 @@
-# /next - Find the next issue to work on
+# /next - Find and start the next piece of work
 
-Works for any type of issue — code, documents, decks, reviews, planning, ops tasks.
+Works for any type of issue — code, documents, decks, reviews, planning, ops tasks. Supports **project** mode (one branch, multiple issues) or **issue** mode (one branch per issue).
 
 ## Usage
 
 ```
-/next           # Show unblocked issues to choose from
-/next ISSUE-12  # Skip selection, start working on ISSUE-12 directly
+/next                      # Ask project vs issue, then proceed
+/next project              # Project mode (skip scope question)
+/next issue                # Issue mode (skip scope question)
+/next project "Phase 1"    # Named project
+/next issue ISSUE-12       # Specific issue
 ```
 
-## If no issue ID is provided
+---
 
-1. Run `linear issues --unblocked` to get issues ready to work on
-2. Parse the output and count the issues
-3. Present options using the format below
+## Choose scope (always ask first)
 
-### Presenting Options
+Unless the user already chose via `project` or `issue` in the command:
 
-Present interactive options:
-- Up to **3 issues** (CLI already sorts yours first)
-- **Always** include "Product planning" as an option
-- If >3 issues, note how many more
-- User can always type a specific issue ID
+> **Work at project level or on a single issue?**
+> - **Project** — one branch for the whole project; `/next` picks the highest-priority issue; `/done` ships everything in one PR
+> - **Issue** — one branch per issue; `/done` ships that issue only
 
-## Starting Work on an Issue
+Wait for the answer before continuing. Do not load issues or create branches until scope is confirmed.
 
-When the user selects an issue (or provides one directly via `/next ISSUE-12`):
+**Skip the question** when:
+- The command includes `project` or `issue` (e.g. `/next project`, `/next issue ISSUE-12`)
+- The current branch clearly indicates mode: `<project-slug>-YYYY-MM-DD` → project; `TEAM-123-*` → issue
 
-1. Run `linear issue start <id>` to assign and set In Progress
-2. Run `linear issue show <id>` to display full context
-3. **Detect work type** (see below)
-4. Follow the appropriate path
+---
 
-## Work Type Detection
+## Path: Project
 
-Classify the issue based on its title, description, and labels:
+Pick the highest-priority unblocked issue in a Linear project and work on a shared project branch. Run `/next project` again to advance to the next issue on the same branch.
 
-**Code work** — any of: implementation, bug fix, feature, refactor, migration, API, infrastructure, test. Also: working directory contains a git repo.
+### Resolve the project
 
-**Non-code work** — any of: document, report, deck, presentation, plan, review, research, process, comms, meeting, analysis, spec, strategy.
+1. **If a project name is provided:** use it (aliases from `.linear` work).
+2. **If an issue ID was provided with project scope:** run `linear issue show <id>`, read its project, start on that issue (skip priority selection).
+3. **Otherwise:** read the default project from config (`.linear` `project=`). If none, run `linear projects` and ask the user to pick one.
+
+### Load project and pick the next issue
+
+1. Run `linear project show "<project>"` for context, milestones, and progress.
+2. **If no issue override:** run `linear issues --project "<project>" --unblocked`.
+3. **Select the highest-priority issue** — do not present a pick list. Priority order: urgent → high → medium → low → none. Break ties by CLI sort order.
+4. If `--unblocked` returns nothing, run `linear issues --project "<project>" --open` and pick the highest-priority open issue. If still empty, see [No work available](#no-work-available).
+
+Announce:
+
+```
+Mode: Project
+Project: Phase 1 (58% complete)
+Working on: ISSUE-12 — Add caching layer [urgent]
+```
+
+### Project branch (code work)
+
+Branch name: `<project-slug>-YYYY-MM-DD` (derive slug from project name; max 40 chars; lowercase, spaces → `-`, strip special chars).
+
+- If already on matching project branch for today, stay on it.
+- Otherwise ask: "Branch from `main` or `develop`?" — wait, then:
+  ```bash
+  git checkout <main|develop>
+  git pull
+  git checkout -b <project-slug>-YYYY-MM-DD
+  ```
+- Do **not** run `linear branch <id>`.
+
+Commit messages: `ISSUE-12: Short description`
+
+When ready to ship the project branch, tell the user to run `/done project`.
+
+---
+
+## Path: Issue
+
+Find an unblocked issue, branch per issue, implement one issue at a time. `/done issue` ships only that issue.
+
+### If no issue ID is provided
+
+1. Run `linear issues --unblocked`
+2. Present interactive options:
+   - Up to **3 issues** (CLI sorts yours first)
+   - **Always** include "Product planning"
+   - If >3 issues, note how many more
+   - User can type a specific issue ID
+
+### Starting work on an issue
+
+When the user selects an issue (or provided `/next issue ISSUE-12`):
+
+1. Run `linear issue start <id>`
+2. Run `linear issue show <id>`
+
+Announce:
+
+```
+Mode: Issue
+Working on: ISSUE-12 — Add caching layer
+```
+
+### Issue branch (code work)
+
+- Ask: "Branch from `main` or `develop`?" — wait, then:
+  ```bash
+  git checkout <main|develop>
+  git pull
+  linear branch <id>
+  ```
+
+When ready to ship, tell the user to run `/done issue`.
+
+---
+
+## Work Type Detection (both paths)
+
+Classify from title, description, and labels:
+
+**Code work** — implementation, bug fix, feature, refactor, migration, API, infrastructure, test; or repo present.
+
+**Non-code work** — document, report, deck, presentation, plan, review, research, process, comms, meeting, analysis, spec, strategy.
 
 If ambiguous, ask: "Is this code work or non-code work?"
 
----
+### Path A: Code Work
 
-## Path A: Code Work
+1. Set up the branch per scope (project or issue rules above)
+2. Read description and acceptance criteria
+3. Explore relevant code
+4. Implement — minimal solution, follow existing patterns
 
-1. Ask: "Should I branch from `main` or `develop`?" — wait for the answer before continuing
-2. Check out the chosen base branch: `git checkout <main|develop>`
-3. Run `git pull` to sync the local repo before branching
-4. Run `linear branch <id>` to create a git branch and check it out
-5. Read the full issue description and acceptance criteria
-6. Explore relevant code (grep for symbols/files mentioned in the issue)
-7. Implement — minimal solution, follow existing patterns, no over-engineering
+**Implementation rules:** read before coding; focused changes only; no unrelated refactors; check acceptance criteria; flag scope creep.
 
-### Implementation Rules
+### Path B: Non-Code Work
 
-- Read relevant files before coding
-- Minimal solution, focused changes only
-- No unrelated refactors
-- Follow existing patterns
-- Check acceptance criteria before finishing
-- If scope expands, stop and flag it
-- Make the safest reasonable assumption on ambiguity; document it in a comment or PR
+1. Read description and acceptance criteria
+2. Identify the deliverable
+3. Help produce it
+4. When ready, tell the user to run `/done` with the same scope they used (`/done project` or `/done issue`)
+
+No git branch for non-code work.
 
 ---
 
-## Path B: Non-Code Work
+## Product planning (issue mode only)
 
-1. Read the full issue description and acceptance criteria
-2. Identify the deliverable (document, deck, plan, review, etc.)
-3. Help produce it — draft, outline, structure, or content as appropriate
-4. When output is ready, tell the user to run `/done` to close the issue
-
-No git branch. No code. Focus entirely on producing the deliverable.
+If the user chooses "Product planning", ask what to focus on (backlog, features, next phase) and follow the product-planning skill.
 
 ---
 
-## If they choose "Product planning"
+## No work available (project mode)
 
-Ask what they want to focus on:
-- Review and prioritize backlog
-- Brainstorm new features
-- Plan the next phase
+1. Run `linear issues --project "<project>" --open`
+2. All blocked → show blockers; suggest `/plan`
+3. No open issues → offer `/plan` or `linear project complete "<project>"`
+4. Linear not configured → say to run `linear login`
 
-Then follow the product-planning skill guidelines.
+## No unblocked issues (issue mode)
 
-## If no unblocked issues are found
-
-1. Run `linear issues --open` to check what's actually there
-2. **If all issues are blocked:** show the blocked list with blocking issue IDs. Say: "All issues are blocked. You can resolve a blocker or use `/plan` to add new unblocked work." Offer the blocked list so the user can pick one to unblock.
-3. **If the backlog is empty:** say "No open issues found." and offer:
-   - "Product planning" to create new issues with `/plan`
-   - A prompt to describe something new: `/plan "..."`
-4. **If `linear` is not configured:** if the CLI returns an auth error, say "Linear CLI is not set up. Run `linear login` to get started."
+1. Run `linear issues --open`
+2. All blocked → show blockers; offer `/plan`
+3. Empty backlog → offer Product planning or `/plan "..."`
+4. Linear not configured → say to run `linear login`
 
 ## Notes
 
-- Always use long flags (--unblocked, not -u) for clarity
-- The CLI already sorts your assigned issues first
-- The "Product planning" option ensures there's always something productive to do
+- Scope question comes **before** branch question and **before** loading work
+- Set default project with `linear project open "<name>"` for faster project mode
+- Match `/done` scope to `/next` scope: `/done project` vs `/done issue`

@@ -1,6 +1,6 @@
 # DevLoop
 
-A set of Claude Code slash commands that implement the full development loop — pick issue → branch → implement → PR → merge — entirely inside Claude Code, with no browser or second terminal window.
+A set of Claude Code slash commands that implement the full development loop — pick work → branch → implement → PR → merge — entirely inside Claude Code, with no browser or second terminal window. Work at **project** level (one branch, many issues) or **issue** level (one branch per issue).
 
 Two variants, same workflow, different issue tracker:
 
@@ -24,8 +24,8 @@ The daily-driver variant. Linear MCP + the `linear` CLI for issue tracking, `gh`
 **What you get:**
 
 - `/standup` — yesterday / today / blocked, from Linear + GitHub
-- `/next` — pick an unblocked issue, branch, start work
-- `/done` — commit, push, PR, watch CI, merge, pull main; closes the Linear issue via `Closes FIN-X`
+- `/next` — project mode (whole Linear project on one branch) or issue mode (one branch per issue)
+- `/done` — ship project (one PR, multiple issues) or ship a single issue; CI, merge, pull main
 - `/think`, `/vision` — reason through a problem or set strategic direction before planning
 - `/plan` — create Linear issues inline via MCP, with acceptance criteria
 - `/pr` — open a PR for review without merging
@@ -56,7 +56,9 @@ The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/thin
 
 | | Claude + Linear | Claude + Jira |
 |---|---|---|
-| Branch creation | `linear branch ISSUE-1` | `git checkout -b PROJ-1-slug` |
+| Branch creation (issue mode) | `linear branch ISSUE-1` | `git checkout -b PROJ-1-slug` |
+| Branch creation (project mode) | `<project-slug>-YYYY-MM-DD` | `<epic-slug>-YYYY-MM-DD` |
+| `/next` / `/done` scope | Project or single issue (asked each time) | Epic (project) or single issue |
 | Start issue | `linear issue start` | `jira issue move` + `jira issue assign` |
 | Close issue | Auto-closed by `Closes FIN-X` in PR body (Linear's GitHub integration) | `jira issue move "Done"` after merge, or via the Jira GitHub app |
 | Sprints | Cycles + milestones | `jira sprint list/add` |
@@ -193,18 +195,23 @@ Shows what you completed yesterday, what's in progress, and any blocked issues. 
 ```
 /next
 ```
-Claude shows up to 3 unblocked issues (yours first). Select one — it gets marked In Progress, a git branch is created, and Claude starts reading the issue and relevant code.
+Claude asks whether to work at **project** or **issue** level (same style as the `main` vs `develop` branch question). Skip with `/next project` or `/next issue`.
+
+- **Project** — loads a Linear project (or Jira epic), picks the highest-priority ready issue, uses one branch named `<slug>-YYYY-MM-DD`, advances issue-by-issue with repeated `/next project`
+- **Issue** — shows up to 3 unblocked issues to choose from, one branch per issue (`linear branch` / `PROJ-12-slug`)
 
 ### Implementation loop
 
 1. Claude reads the issue, explores the codebase, and implements
 2. Review what will be committed: `!git status`, `!git diff`
-3. Ship it: `/done`
-4. Pick the next issue: `/next`
+3. Ship it: `/done` (match scope: `/done project` or `/done issue`)
+4. Continue: `/next` with the same scope
 
-`/done` handles the full ship cycle: stages and commits uncommitted changes, pushes the branch, creates a PR with `Closes FIN-X` (or `Closes PROJ-X`) in the body, waits for CI, merges with squash and deletes the branch, checks out main and pulls.
+**Issue mode:** `/done issue` stages, commits, pushes, opens one PR with `Closes FIN-X`, waits for CI, merges, deletes the branch, returns to main.
 
-If CI fails: `/done` stops and tells you what failed. Fix the code, push to the same branch, run `/done` again — it picks up the existing PR.
+**Project mode:** `/done project` does the same for the whole project branch — one PR with a `Closes FIN-X` line per issue worked on, then `linear project complete` when the backlog is clear.
+
+If CI fails: `/done` stops and tells you what failed. Fix the code, push to the same branch, run `/done` again with the same scope — it picks up the existing PR.
 
 Use `/pr` instead of `/done` when you want a teammate to review before merging.
 
@@ -213,7 +220,7 @@ Use `/pr` instead of `/done` when you want a teammate to review before merging.
 ```
 /plan "Add retry logic to the analyzer"
 ```
-Claude reads current tracker state, asks clarifying questions if needed, drafts issues with descriptions and acceptance criteria, creates them directly, then suggests `/next <ID>` to start immediately.
+Claude reads current tracker state, asks clarifying questions if needed, drafts issues with descriptions and acceptance criteria, creates them directly, then suggests `/next project` or `/next issue <ID>` to start immediately.
 
 ### End of day (optional)
 
@@ -228,14 +235,26 @@ Summary of what shipped, what's still open, any PRs pending review.
 
 Conventions: examples use Linear issue IDs like `FIN-12`. Substitute `PROJ-12` for the Jira variant.
 
-### `/next` — Pick the next issue and start working
+### `/next` — Start the next piece of work
 
 ```
-/next           # Show unblocked / To Do issues to choose from
-/next FIN-12    # Jump straight to a specific issue
+/next                      # Ask: project or issue?
+/next project              # Project mode (skip scope question)
+/next issue                # Issue mode (skip scope question)
+/next project "Phase 1"    # Named Linear project / Jira epic
+/next issue FIN-12         # Specific issue
 ```
 
-Marks the issue In Progress, creates a git branch (`fin-42-add-caching-layer`), reads the issue, explores relevant code, and begins implementation. Run `!git checkout main && git pull` first — `/next` branches off current HEAD.
+**Scope question** (unless you pass `project` or `issue`, or the current branch already implies mode):
+
+> Work at **project** level or on a **single issue**?
+
+| Mode | What happens | Branch |
+|------|----------------|--------|
+| **Project** | Highest-priority unblocked issue in the project; repeat `/next project` for the next issue on the same branch | `phase-1-2026-05-22` |
+| **Issue** | Pick from up to 3 unblocked issues (or pass an ID); one issue per branch | `fin-42-add-caching-layer` |
+
+Then asks `main` or `develop` (code work), marks the issue In Progress, reads it, and starts implementation. Set a default project with `linear project open "Phase 1"` for faster project mode.
 
 ### `/think` — Reason through a problem before planning
 
@@ -264,18 +283,28 @@ Deep, honest conversation about where the project is heading on 1 and 3 year hor
 /plan "Add retry logic"      # Focused planning for a specific area
 ```
 
-Reads current tracker state, drafts issues with titles, descriptions, and acceptance criteria, creates them directly, then suggests `/next <ID>` for the top priority. Issues are kept small (one PR each); L/XL issues get broken into sub-issues.
+Reads current tracker state, drafts issues with titles, descriptions, and acceptance criteria, creates them directly, then suggests `/next project` or `/next issue <ID>`. In issue mode, work stays one PR per issue; in project mode, multiple issues can ship in one PR. L/XL issues get broken into sub-issues.
 
-### `/done` — Ship the current issue end-to-end
+### `/done` — Ship completed work
 
 ```
-/done           # Complete the current issue (detected from branch name)
-/done FIN-12    # Complete a specific issue
+/done                      # Ask: project or issue?
+/done project              # Ship the whole project branch
+/done issue                # Ship the current issue branch
+/done project "Phase 1"    # Named project (ambiguous branch)
+/done issue FIN-12         # Specific issue
 ```
 
-Stages, commits, pushes, opens PR with `Closes <ID>`, waits for CI, merges with squash, deletes the branch, returns to main. If push fails due to divergence, rebases and lists conflicts — never force-pushes without explicit instruction.
+**Scope question** matches `/next` — use the same mode you started with.
 
-For non-code work (documents, decks, research): closes the issue directly, optionally attaching a link.
+| Mode | PR | Closes |
+|------|-----|--------|
+| **Issue** | One PR, one issue | `Closes FIN-12` |
+| **Project** | One PR for the branch | `Closes FIN-10`, `Closes FIN-12`, … (every issue on the branch) |
+
+Stages, commits, pushes, waits for CI, merges with squash, deletes the branch, returns to main. Project mode runs `linear project complete` when no open issues remain. If push fails due to divergence, rebases and lists conflicts — never force-pushes without explicit instruction.
+
+For non-code work (documents, decks, research): closes issue(s) in Linear directly, optionally attaching links.
 
 ### `/standup` — Daily standup summary
 
@@ -321,7 +350,7 @@ Looks for unclear issues, unestimated issues, orphaned issues, scope gaps, overs
 /split            # Split the current issue (detected from branch)
 ```
 
-Proposes 3–5 sub-issues with estimates and dependency ordering, creates them with `--parent` and `--blocked-by` set correctly, then offers `/next` for the first one.
+Proposes 3–5 sub-issues with estimates and dependency ordering, creates them with `--parent` and `--blocked-by` set correctly, then offers `/next project` or `/next issue` for the first one.
 
 ### `/issues` — Browse and filter issues by project
 
@@ -330,7 +359,7 @@ Proposes 3–5 sub-issues with estimates and dependency ordering, creates them w
 /issues "Phase 1"        # Jump directly to a named project
 ```
 
-Lists active projects, then issues with ID, priority, status, title, assignee, estimate. Filters by status and assignee. Typing an issue ID shows full details and offers `/next <ID>`.
+Lists active projects, then issues with ID, priority, status, title, assignee, estimate. Filters by status and assignee. Typing an issue ID shows full details and offers `/next issue <ID>` or `/next project`.
 
 ### `/triage` — Groom the backlog interactively
 

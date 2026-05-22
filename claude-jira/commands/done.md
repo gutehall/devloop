@@ -1,101 +1,170 @@
-# /done - Complete work on an issue
+# /done - Complete work and ship
 
-Works for any type of issue — code, documents, decks, reviews, planning, ops tasks.
+Works for any type of issue — code, documents, decks, reviews, planning, ops tasks. Supports **project** mode (one PR for the epic branch) or **issue** mode (one PR for a single issue).
 
 ## Usage
 
 ```
-/done             # Complete the current issue
-/done PROJ-12     # Complete a specific issue
+/done                      # Ask project vs issue, then proceed
+/done project              # Ship the current epic branch
+/done issue                # Ship the current issue
+/done project PROJ-100     # Specific epic (when branch is ambiguous)
+/done issue PROJ-12        # Specific issue
 ```
-
-## Work Type Detection
-
-Determine work type the same way `/next` does — issue summary, description, type, and whether a git branch matching the issue ID exists.
-
-If a branch like `PROJ-42-*` is checked out, treat as code work.
-If no such branch exists, treat as non-code work.
-If ambiguous, ask.
 
 ---
 
-## Path A: Code Work
+## Choose scope (always ask first)
 
-1. **Detect the issue** from the branch name (extract `[A-Z]+-[0-9]+` pattern) or use the provided ID
-2. **Show work summary:**
-   - `git log --oneline <base>..HEAD`
-   - `git diff --stat <base>..HEAD`
-3. **Stage and commit** any uncommitted changes (if any exist)
-4. **Push branch** to origin
-5. **Create PR:**
-   ```
-   gh pr create --title "PROJ-12: Issue summary" --body "## Summary\n...\n\nCloses PROJ-12"
-   ```
-   Print the PR URL immediately after creation.
-6. **Wait for CI:**
-   ```bash
-   gh pr checks --watch
-   ```
-   - All checks pass → proceed to merge
-   - Any check fails → stop: say "CI failed. Fix the issue, push to the same branch, then run `/done` again." Do not merge.
-   - No checks configured → proceed to merge immediately
-7. **Merge:**
-   ```bash
-   gh pr merge --squash --delete-branch
-   ```
-8. **Return to base and pull:**
-   ```bash
-   git checkout <base>
-   git pull
-   ```
-9. **Confirm merge landed:**
-   ```bash
-   git log --oneline -5
-   ```
-10. Offer `/next` to continue
+Unless the user already chose via `project` or `issue` in the command:
 
-### Branch name detection fallback
+> **Ship at project level or for a single issue?**
+> - **Project** — one PR closing all issues worked on this epic branch
+> - **Issue** — one PR closing the issue on this issue branch
 
-If the current branch does **not** match the `[A-Z]+-[0-9]+` pattern (e.g., it was created manually):
-1. Run `git log --oneline -5` to show recent commits for context
-2. Ask: "I couldn't detect an issue ID from branch `<branch-name>`. Which issue does this complete? (e.g., PROJ-42)"
-3. Continue with the provided ID
+Wait for the answer before pushing, creating a PR, or closing issues.
 
-### If push is rejected due to diverged history
+**Skip the question** when:
+- The command includes `project` or `issue`
+- The current branch clearly indicates mode: `<epic-slug>-YYYY-MM-DD` → project; `PROJ-123-*` → issue
 
-If `git push` fails because the remote has diverged:
-1. Run `git fetch origin` then `git log --oneline HEAD..origin/<branch>` to assess the gap
-2. Run `git rebase origin/<base-branch>` (prefer rebase over merge for a clean history)
-3. If conflicts appear: list the conflicting files and **stop** — do not auto-resolve
-4. Tell the user: "There are conflicts in: `<files>`. Resolve them, then run `git rebase --continue` and `/done` again."
-5. Do **not** force-push unless the user explicitly requests it
+---
 
-### Code Rules
+## Work Type Detection
 
-- The PR title and body **must** contain the issue key (e.g., `PROJ-42`) — this links the PR to the Jira issue in the development panel
-- Including `Closes PROJ-42` in the PR body auto-transitions the issue to Done on merge if the Jira-GitHub integration is configured
-- If the Jira-GitHub integration is **not** set up: after merge, manually run `jira issue move PROJ-42 "Done"` to close the issue
-- If there are no commits, skip the PR step and note it
-- Base branch is typically `main` — detect with `git remote show origin | grep 'HEAD branch'` if unsure
+- Epic branch or `PROJ-123-*` issue branch with git repo → code work
+- No matching branch → non-code work
+- If ambiguous, ask
+
+---
+
+## Path: Project — ship the epic
+
+### Resolve the epic
+
+1. From branch: map `<epic-slug>-YYYY-MM-DD` via `jira epic list --plain`
+2. If epic key provided, use it
+3. Otherwise ask which epic this branch completes
+
+### 1. Gather epic issues
+
+```bash
+jira issue view <epic-key>
+jira issue list --epics <epic-key> -s"In Progress" --plain
+git log --oneline <base>..HEAD
+```
+
+Union In Progress children with `[A-Z]+-[0-9]+` from commits.
+
+### 2–5. Base branch, summary, commit, push
+
+Same as Linear project path: detect `<base>`, show log/diff, commit, `git push -u origin HEAD`.
+
+### 6. Create one project PR
+
+Title: `<Epic summary>: <short summary>`
+
+Body — one `Closes PROJ-ID` per issue:
+
+```bash
+gh pr create --title "Auth System: Caching fixes" --body "$(cat <<'EOF'
+## Summary
+
+- What changed across the epic
+
+## Issues closed
+
+Closes PROJ-10
+Closes PROJ-12
+
+## Test plan
+
+- [ ] Tested locally
+EOF
+)"
+```
+
+### 7–9. CI, merge, return to base
+
+```bash
+gh pr checks --watch
+gh pr merge --squash --delete-branch
+git checkout <base> && git pull
+```
+
+### 10. Complete the epic
+
+- Unresolved children remain → list them; offer `/next project`
+- None remain → `jira issue move <epic-key> "Done"` (or workflow epic-done transition)
+
+### Project code rules
+
+- One PR per epic branch from `/done project`
+- Without GitHub-Jira integration: `jira issue move <id> "Done"` per issue after merge
+
+---
+
+## Path: Issue — ship a single issue
+
+### 1. Detect the issue
+
+From branch (`PROJ-123-*`) or provided key. Fallback: ask which issue.
+
+### 2. Detect base branch
+
+```bash
+git remote show origin | grep 'HEAD branch'
+```
+
+### 3–5. Summary, commit, push
+
+`git log`, `git diff --stat`, commit, `git push -u origin HEAD`.
+
+### 6. Create issue PR
+
+```bash
+gh pr create --title "PROJ-12: Issue summary" --body "$(cat <<'EOF'
+## Summary
+
+- What changed and why
+
+## Test plan
+
+- [ ] Tested locally
+
+Closes PROJ-12
+EOF
+)"
+```
+
+### 7–9. CI, merge, return to base
+
+Same watch/merge/checkout/pull pattern as project path.
+
+### Issue code rules
+
+- PR title and body must include issue key; `Closes PROJ-42` for auto-transition
+- Without integration: `jira issue move PROJ-42 "Done"` after merge
+- Smart Commits: `PROJ-42 #done #comment …` if DVCS connector is enabled
+
+### If push is rejected (both code paths)
+
+Rebase on `<base>`; stop on conflicts; no force-push unless requested.
 
 ---
 
 ## Path B: Non-Code Work
 
-1. **Identify the issue** from the provided ID, or ask which issue was just completed
-2. **Summarize** what was produced (document title, deck name, decision made, etc.)
-3. **Ask for an artifact link:** "Any link to attach? (Google Doc, Slides, Confluence, Notion, etc.)"
-   - If yes: run `jira issue comment add PROJ-42 "Artifact: <link>"` before closing
-   - If no: skip
-4. **Close in Jira:** run `jira issue move PROJ-42 "Done"`
-5. Offer `/next` to continue
+**Project:** summarize epic deliverables, artifact links via `jira issue comment add`, `jira issue move` Done per child, epic Done if complete.
 
-No git, no PR, no branch. Just capture the output and close.
+**Issue:** summarize, artifact comment, `jira issue move <key> "Done"`.
+
+Offer `/next` with matching scope.
 
 ---
 
 ## Notes
 
-- The same command works regardless of role — manager closing a deck, engineer shipping a PR
-- When in doubt about work type, check for a matching git branch first
-- Smart Commits also work in commit messages (requires Jira DVCS connector): `git commit -m "PROJ-42 #done #comment Fixed the thing"`
+- Scope question comes **before** git operations
+- `/done project` pairs with `/next project`; `/done issue` with `/next issue`
+- Check branch pattern when work type is unclear
