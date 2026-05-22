@@ -1,108 +1,163 @@
-# /next - Find the next issue to work on
+# /next - Find and start the next piece of work
 
-Works for any type of issue — code, documents, decks, reviews, planning, ops tasks.
+Works for any type of issue — code, documents, decks, reviews, planning, ops tasks. Supports **project** mode (one branch, multiple issues in an epic) or **issue** mode (one branch per issue).
+
+In Jira, **project mode** uses an epic as the batch unit (Linear's equivalent of a project).
 
 ## Usage
 
 ```
-/next             # Show To Do issues to choose from
-/next PROJ-12     # Skip selection, start working on PROJ-12 directly
+/next                      # Ask project vs issue, then proceed
+/next project              # Project/epic mode (skip scope question)
+/next issue                # Issue mode (skip scope question)
+/next project PROJ-100     # Specific epic
+/next issue PROJ-12        # Specific issue
 ```
 
-## If no issue ID is provided
+---
 
-1. Run `jira issue list -s"To Do" -a"$(jira me)" --plain` to get your assigned issues ready to work on
-2. If empty, run `jira issue list -s"To Do" --plain` for unassigned issues
-3. Parse the output and count the issues
-4. Present options using the format below
+## Choose scope (always ask first)
 
-### Presenting Options
+Unless the user already chose via `project` or `issue` in the command:
 
-Present interactive options:
-- Up to **3 issues** (own assigned issues first)
-- **Always** include "Product planning" as an option
-- If >3 issues, note how many more
-- User can always type a specific issue ID
+> **Work at project level or on a single issue?**
+> - **Project** — one branch for the epic; `/next` picks the highest-priority child issue; `/done` ships everything in one PR
+> - **Issue** — one branch per issue; `/done` ships that issue only
 
-## Starting Work on an Issue
+Wait for the answer before continuing. Do not load issues or create branches until scope is confirmed.
 
-When the user selects an issue (or provides one directly via `/next PROJ-12`):
+**Skip the question** when:
+- The command includes `project` or `issue`
+- The current branch clearly indicates mode: `<epic-slug>-YYYY-MM-DD` → project; `PROJ-123-*` → issue
 
-1. Run `jira issue move PROJ-12 "In Progress"` to set the status
-2. Run `jira issue assign PROJ-12 "$(jira me)"` to assign to yourself
-3. Run `jira issue view PROJ-12` to display full context
-4. **Detect work type** (see below)
-5. Follow the appropriate path
+---
 
-## Work Type Detection
+## Path: Project (epic)
 
-Classify the issue based on its summary, description, type, and labels:
+Pick the highest-priority ready issue in an epic on a shared project branch. Run `/next project` again for the next issue on the same branch.
 
-**Code work** — any of: implementation, bug fix, feature, refactor, migration, API, infrastructure, test. Also: working directory contains a git repo, or issue type is Bug/Story/Task.
+### Resolve the epic
 
-**Non-code work** — any of: document, report, deck, presentation, plan, review, research, process, comms, meeting, analysis, spec, strategy.
+1. **If an epic key or name is provided:** use it (`jira epic list --plain` to resolve names).
+2. **If an issue key was provided with project scope:** `jira issue view <key>`, read parent epic, start on that issue (skip priority selection).
+3. **Otherwise:** `jira epic list --plain` — pick active epic or ask the user.
+
+### Load epic and pick the next issue
+
+1. `jira issue view <epic-key>`
+2. `jira issue list --epics <epic-key> -s"To Do" --plain`
+3. If empty: `jira issue list --epics <epic-key> --resolution Unresolved --plain`
+4. **Highest priority** — no pick list. Order: Highest → High → Medium → Low → Lowest.
+
+Announce:
+
+```
+Mode: Project (epic)
+Epic: PROJ-100 — Auth System
+Working on: PROJ-12 — Add caching layer [High]
+```
+
+### Start work
+
+1. `jira issue move <id> "In Progress"`
+2. `jira issue assign <id> "$(jira me)"`
+3. `jira issue view <id>`
+
+### Project branch (code work)
+
+Branch: `<epic-slug>-YYYY-MM-DD` (from epic summary; max 40 chars; slug rules as Linear project slug).
+
+- If already on matching epic branch for today, stay on it.
+- Otherwise ask: "Branch from `main` or `develop`?" — wait, then:
+  ```bash
+  git checkout <main|develop>
+  git pull
+  git checkout -b <epic-slug>-YYYY-MM-DD
+  ```
+
+Commit messages: `PROJ-12: Short description`
+
+When ready, tell the user to run `/done project`.
+
+---
+
+## Path: Issue
+
+Find a To Do issue, branch per issue, implement one at a time. `/done issue` ships only that issue.
+
+### If no issue key is provided
+
+1. `jira issue list -s"To Do" -a"$(jira me)" --plain`
+2. If empty: `jira issue list -s"To Do" --plain`
+3. Present interactive options:
+   - Up to **3 issues**
+   - **Always** include "Product planning"
+   - If >3, note how many more
+   - User can type a specific key
+
+### Starting work
+
+1. `jira issue move <key> "In Progress"`
+2. `jira issue assign <key> "$(jira me)"`
+3. `jira issue view <key>`
+
+Announce:
+
+```
+Mode: Issue
+Working on: PROJ-12 — Add caching layer
+```
+
+### Issue branch (code work)
+
+- Ask: "Branch from `main` or `develop`?" — wait, then:
+  ```bash
+  git checkout <main|develop>
+  git pull
+  ```
+- Derive slug from summary (lowercase, dashes, max 50 chars):
+  ```bash
+  git checkout -b PROJ-12-<slug>
+  ```
+
+When ready, tell the user to run `/done issue`.
+
+---
+
+## Work Type Detection (both paths)
+
+**Code work** — implementation, bug fix, feature, refactor, etc.; git repo present; or type Bug/Story/Task.
+
+**Non-code work** — document, deck, plan, review, research, comms, analysis, spec, strategy.
 
 If ambiguous, ask: "Is this code work or non-code work?"
 
----
+### Path A: Code Work
 
-## Path A: Code Work
+Set up branch per scope, read criteria, explore code, implement minimally.
 
-1. Ask: "Should I branch from `main` or `develop`?" — wait for the answer before continuing
-2. Check out the chosen base branch: `git checkout <main|develop>`
-3. Run `git pull` to sync the local repo before branching
-4. Create a git branch from the issue:
-   - Derive a slug from the issue summary (lowercase, spaces to dashes, strip special chars, max 50 chars)
-   - Run: `git checkout -b PROJ-12-<slug>`
-5. Read the full issue description and acceptance criteria from `jira issue view PROJ-12`
-6. Explore relevant code (grep for symbols/files mentioned in the issue)
-7. Implement — minimal solution, follow existing patterns, no over-engineering
+### Path B: Non-Code Work
 
-### Implementation Rules
-
-- Read relevant files before coding
-- Minimal solution, focused changes only
-- No unrelated refactors
-- Follow existing patterns
-- Check acceptance criteria before finishing
-- If scope expands, stop and flag it
-- Make the safest reasonable assumption on ambiguity; document it in a comment or PR
+Produce the deliverable; run `/done project` or `/done issue` when ready. No git branch.
 
 ---
 
-## Path B: Non-Code Work
+## Product planning (issue mode only)
 
-1. Read the full issue description and acceptance criteria via `jira issue view PROJ-12`
-2. Identify the deliverable (document, deck, plan, review, etc.)
-3. Help produce it — draft, outline, structure, or content as appropriate
-4. When output is ready, tell the user to run `/done` to close the issue
-
-No git branch. No code. Focus entirely on producing the deliverable.
+If the user chooses "Product planning", follow the product-planning skill.
 
 ---
 
-## If they choose "Product planning"
+## No work available
 
-Ask what they want to focus on:
-- Review and prioritize backlog
-- Brainstorm new features
-- Plan the next sprint
+**Project:** no To Do children → show status; offer `/plan`.
 
-Then follow the product-planning skill guidelines.
+**Issue:** no To Do → show In Progress/blocked; offer `/plan`.
 
-## If no To Do issues are found
-
-1. Run `jira issue list --resolution Unresolved --plain` to check what's actually there
-2. **If all issues are In Progress or blocked:** show the list with status. Say: "No To Do issues. You can look at blocked issues or use `/plan` to add new work."
-3. **If the backlog is empty:** say "No open issues found." and offer:
-   - "Product planning" to create new issues with `/plan`
-   - A prompt to describe something new: `/plan "..."`
-4. **If `jira` is not configured:** if the CLI returns an auth error, say "Jira CLI is not set up. Run `jira init` to get started."
+**Jira not configured:** say to run `jira init`.
 
 ## Notes
 
-- Issue IDs use project key prefix: `PROJ-123`
-- `jira me` returns your Jira account ID — use it for self-assignment
-- Jira statuses are workflow-specific; common values: "Backlog", "To Do", "In Progress", "In Review", "Done"
-- Issue types: Epic, Story, Bug, Task, Sub-task
-- The `--plain` flag suppresses interactive UI for script-friendly output
+- Scope question comes **before** branch question
+- Match `/done` scope: `/done project` vs `/done issue`
+- `jira me` for self-assignment

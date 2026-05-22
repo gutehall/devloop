@@ -1,101 +1,260 @@
-# /done - Complete work on an issue
+# /done - Complete work and ship
 
-Works for any type of issue — code, documents, decks, reviews, planning, ops tasks.
+Works for any type of issue — code, documents, decks, reviews, planning, ops tasks. Supports **project** mode (one PR for the whole project branch) or **issue** mode (one PR for a single issue).
 
 ## Usage
 
 ```
-/done           # Complete the current issue
-/done ISSUE-12  # Complete a specific issue
+/done                      # Ask project vs issue, then proceed
+/done project              # Ship the current project branch
+/done issue                # Ship the current issue
+/done project "Phase 1"    # Named project (when branch is ambiguous)
+/done issue ISSUE-12       # Specific issue
 ```
-
-## Work Type Detection
-
-Determine work type the same way `/next` does — issue title, description, labels, and whether a git branch matching the issue ID exists.
-
-If a branch like `fin-42-*` or `lin-42-*` is checked out, treat as code work.
-If no such branch exists, treat as non-code work.
-If ambiguous, ask.
 
 ---
 
-## Path A: Code Work
+## Choose scope (always ask first)
 
-1. **Detect the issue** from the branch name (extract `TEAM-123` pattern) or use the provided ID
-2. **Detect base branch:** run `git remote show origin | grep 'HEAD branch'`, default to `main` if detection fails. Use this as `<base>` throughout Path A.
-3. **Show work summary:**
-   - `git log --oneline <base>..HEAD`
-   - `git diff --stat <base>..HEAD`
-4. **Stage and commit** any uncommitted changes (if any exist)
-5. **Push branch** to origin
-6. **Create PR:**
-   ```
-   gh pr create --title "ISSUE-12: Issue title" --body "## Summary\n...\n\nCloses ISSUE-12"
-   ```
-   Print the PR URL immediately after creation.
-7. **Wait for CI:**
-   ```bash
-   gh pr checks --watch
-   ```
-   - All checks pass → proceed to merge
-   - Any check fails → stop: say "CI failed. Fix the issue, push to the same branch, then run `/done` again." Do not merge.
-   - No checks configured → proceed to merge immediately
-8. **Merge:**
-   ```bash
-   gh pr merge --squash --delete-branch
-   ```
-9. **Return to base and pull:**
-   ```bash
-   git checkout <base>
-   git pull
-   ```
-10. **Confirm merge landed:**
-    ```bash
-    git log --oneline -5
-    ```
-11. Offer `/next` to continue
+Unless the user already chose via `project` or `issue` in the command:
 
-### Branch name detection fallback
+> **Ship at project level or for a single issue?**
+> - **Project** — one PR closing all issues worked on this project branch
+> - **Issue** — one PR closing the issue on this issue branch
 
-If the current branch does **not** match the `TEAM-123` pattern (e.g., it was created manually):
-1. Run `git log --oneline -5` to show recent commits for context
-2. Ask: "I couldn't detect an issue ID from branch `<branch-name>`. Which issue does this complete? (e.g., FIN-42)"
-3. Continue with the provided ID
+Wait for the answer before pushing, creating a PR, or closing issues.
 
-### If push is rejected due to diverged history
+**Skip the question** when:
+- The command includes `project` or `issue`
+- The current branch clearly indicates mode: `<project-slug>-YYYY-MM-DD` → project; `TEAM-123-*` → issue
 
-If `git push` fails because the remote has diverged:
-1. Run `git fetch origin` then `git log --oneline HEAD..origin/<branch>` to assess the gap
-2. Run `git rebase origin/<base-branch>` (prefer rebase over merge for a clean history)
-3. If conflicts appear: list the conflicting files and **stop** — do not auto-resolve
-4. Tell the user: "There are conflicts in: `<files>`. Resolve them, then run `git rebase --continue` and `/done` again."
-5. Do **not** force-push unless the user explicitly requests it
+---
 
-### Code Rules
+## Work Type Detection
 
-- The PR body **must** contain `Closes <ID>` (e.g., `Closes FIN-42`) — this triggers Linear's GitHub integration to auto-move the issue to Done on merge
-- Do **not** run `linear done` when creating a PR — GitHub integration handles Linear status on merge. If the issue does not auto-close after merge, the GitHub-Linear integration may not be configured; run `linear done <id>` manually as a fallback.
-- If there are no commits, skip the PR step and note it
-- If in a worktree, run `linear done <id>` after PR creation and show the cleanup commands
-- Base branch is typically `main` — if the repo uses a different default (e.g., `develop`), detect it with `git remote show origin | grep 'HEAD branch'`
+- Project branch (`<project-slug>-YYYY-MM-DD`) or issue branch (`TEAM-123-*`) with git repo → code work
+- No matching branch → non-code work
+- If ambiguous, ask
+
+---
+
+## Path: Project — ship the whole project
+
+### Resolve the project
+
+1. From branch name: map `<project-slug>-YYYY-MM-DD` back via `linear projects`
+2. If a project name is provided, use it
+3. Otherwise ask which project this branch completes
+
+### 1. Gather project issues
+
+```bash
+linear project show "<project>"
+linear issues --project "<project>" --status in-progress
+git log --oneline <base>..HEAD
+```
+
+Union In Progress issues with `TEAM-123` patterns from commit messages.
+
+### 2. Detect base branch
+
+```bash
+git remote show origin | grep 'HEAD branch'
+```
+
+Default to `main`. Use `<base>` throughout.
+
+### 3. Show work summary
+
+```bash
+git log --oneline <base>..HEAD
+git diff --stat <base>..HEAD
+```
+
+List every issue ID in this project push.
+
+### 4. Stage and commit
+
+Commit uncommitted changes. Prefer `ISSUE-12: …` per change; else `<project-slug>: <summary>`.
+
+### 5. Push branch
+
+```bash
+git push -u origin HEAD
+```
+
+### 6. Create one project PR
+
+Title: `<Project Name>: <short summary>`
+
+Body — one `Closes ISSUE-ID` per issue:
+
+```bash
+gh pr create --title "Phase 1: Caching and auth improvements" --body "$(cat <<'EOF'
+## Summary
+
+- What changed across the project
+
+## Issues closed
+
+Closes ISSUE-10
+Closes ISSUE-12
+
+## Test plan
+
+- [ ] Tested locally
+EOF
+)"
+```
+
+Print the PR URL immediately.
+
+### 7. Wait for CI
+
+```bash
+gh pr checks --watch
+```
+
+- Pass → merge
+- Fail → stop; fix and run `/done project` again
+- No checks → merge immediately
+
+### 8. Merge
+
+```bash
+gh pr merge --squash --delete-branch
+```
+
+### 9. Return to base
+
+```bash
+git checkout <base>
+git pull
+```
+
+### 10. Complete the Linear project
+
+- `linear issues --project "<project>" --open` — if none remain: `linear project complete "<project>"`
+- If issues remain, list them and offer `/next project`
+
+### Project code rules
+
+- One PR per project branch from `/done project`
+- Do not run `linear issue close` before merge — GitHub integration closes on merge
+- No commits → skip PR and note it
+
+---
+
+## Path: Issue — ship a single issue
+
+### 1. Detect the issue
+
+From branch name (`TEAM-123` pattern) or the provided ID. If branch does not match:
+
+1. `git log --oneline -5`
+2. Ask: "Which issue does this complete? (e.g., FIN-42)"
+
+### 2. Detect base branch
+
+```bash
+git remote show origin | grep 'HEAD branch'
+```
+
+Default to `main`.
+
+### 3. Show work summary
+
+```bash
+git log --oneline <base>..HEAD
+git diff --stat <base>..HEAD
+```
+
+### 4. Stage and commit
+
+Stage and commit any uncommitted changes.
+
+### 5. Push branch
+
+```bash
+git push -u origin HEAD
+```
+
+### 6. Create issue PR
+
+```bash
+gh pr create --title "ISSUE-12: Issue title" --body "$(cat <<'EOF'
+## Summary
+
+- What changed and why
+
+## Test plan
+
+- [ ] Tested locally
+
+Closes ISSUE-12
+EOF
+)"
+```
+
+Print the PR URL immediately.
+
+### 7. Wait for CI
+
+```bash
+gh pr checks --watch
+```
+
+- Pass → merge
+- Fail → stop; fix and run `/done issue` again
+- No checks → merge immediately
+
+### 8. Merge
+
+```bash
+gh pr merge --squash --delete-branch
+```
+
+### 9. Return to base
+
+```bash
+git checkout <base>
+git pull
+git log --oneline -5
+```
+
+### Issue code rules
+
+- PR body **must** contain `Closes <ID>` for Linear GitHub integration
+- Do **not** run `linear issue close` before merge
+- If integration does not close the issue after merge, run `linear issue close <id>` as fallback
+- No commits → skip PR and note it
+- Worktree: show cleanup commands after PR creation
+
+### If push is rejected (both code paths)
+
+1. `git fetch origin` and assess gap
+2. `git rebase origin/<base-branch>`
+3. Conflicts → **stop**, list files, tell user to resolve and re-run `/done`
+4. Do **not** force-push unless explicitly requested
 
 ---
 
 ## Path B: Non-Code Work
 
-1. **Identify the issue** from the provided ID, or ask which issue was just completed
-2. **Summarize** what was produced (document title, deck name, decision made, etc.)
-3. **Ask for an artifact link:** "Any link to attach? (Google Doc, Slides, Notion, etc.)"
-   - If yes: post it as a Linear comment via `mcp__claude_ai_Linear__save_comment` before closing
-   - If no: skip
-4. **Close in Linear:** run `linear done <id>`
-5. Offer `/next` to continue
+Ask scope if not already chosen, then:
 
-No git, no PR, no branch. Just capture the output and close.
+**Project:** identify project, summarize all deliverables, collect artifact links, `linear issue close` per completed issue, `linear project complete` if done.
+
+**Issue:** identify issue, summarize deliverable, artifact link via `mcp__claude_ai_Linear__save_comment`, `linear issue close <id>`.
+
+Offer `/next` with matching scope.
+
+No git, no PR.
 
 ---
 
 ## Notes
 
-- The same command works regardless of role — manager closing a deck, engineer shipping a PR
-- When in doubt about work type, check for a matching git branch first
+- Scope question comes **before** git operations
+- Use `/done project` after `/next project` and `/done issue` after `/next issue`
+- When in doubt about work type, check the branch pattern first
