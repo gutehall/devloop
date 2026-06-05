@@ -1,12 +1,12 @@
 # /vision - Strategic future planning for a project
 
-Facilitate a deep, honest conversation about where the project is heading — 1 year and 3 years out. Surface logical next steps, identify capability gaps, and produce a strategic view worth acting on.
+Facilitate a deep, honest conversation about where the project is heading — 6 months and 1 year out. Surface logical next steps, identify capability gaps, and produce a strategic view worth acting on.
 
 ## Usage
 
 ```
 /vision                          # Open-ended future exploration
-/vision "1 year"                 # Focus on the near-term horizon only
+/vision "6 months"               # Focus on the near-term horizon only
 /vision "scale"                  # Explore a specific strategic theme
 /vision "compete with X"         # Explore competitive positioning
 ```
@@ -45,7 +45,7 @@ Follow the full vision skill protocol:
 
 The skill walks through:
 - Grounding questions to establish the current position
-- Horizon mapping: 1yr / 3yr
+- Horizon mapping: 6mo / 1yr
 - Forces of change: technology, users, competition, regulation
 - Capability gaps: what would need to exist
 - Strategic bets: which futures to commit to
@@ -66,14 +66,14 @@ At the end of the conversation, produce a structured vision document:
 
 ### Where we're going
 
-**1 year:** [What the project looks like. What's been built. What users can do.]
-**3 years:** [The bigger shift. What new capabilities exist. What's changed about the user or market.]
+**6 months:** [What the project looks like. What's been built. What users can do.]
+**1 year:** [The bigger shift. What new capabilities exist. What's changed about the user or market.]
 
 ### Strategic bets
 [2–4 things we're committing to. Each with a one-sentence rationale.]
 
 ### Capability gaps
-[What doesn't exist yet that would be required to reach the 3yr horizon]
+[What doesn't exist yet that would be required to reach the 1yr horizon]
 
 ### Improvement themes
 [Cross-cutting areas — architecture, UX, performance, reliability — worth addressing at any horizon]
@@ -82,7 +82,7 @@ At the end of the conversation, produce a structured vision document:
 [The things that could be wrong. What early signals to watch for.]
 
 ### Next planning horizon
-[What to focus on in the next 3–6 months, given all of the above]
+[What to focus on in the next 1–3 months, given all of the above]
 ```
 
 ### 4. Offer to hand off
