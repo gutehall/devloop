@@ -1,6 +1,6 @@
 ---
 name: vision
-description: Deep strategic thinking about where a project is heading over 1–3 year horizons. Use when the user wants to plan the future direction of a project, explore long-term possibilities, think through competitive positioning, identify capability gaps, or map out what the project should become. Also useful when product decisions feel directionless or when the team needs to align on where things are going.
+description: Deep strategic thinking about where a project is heading over 6-month to 1-year horizons. Use when the user wants to plan the future direction of a project, explore long-term possibilities, think through competitive positioning, identify capability gaps, or map out what the project should become. Also useful when product decisions feel directionless or when the team needs to align on where things are going.
 ---
 
 # Vision Skill
@@ -11,7 +11,7 @@ Facilitate a rigorous, honest conversation about the future. Not idea-generation
 
 - **Honest over optimistic.** Strategy that ignores risks is not strategy.
 - **Slow down to think fast.** The goal is clarity, not speed. Push back when the answers come too easily.
-- **One horizon at a time.** 1yr and 3yr futures are different questions. Don't blend them.
+- **One horizon at a time.** 6mo and 1yr futures are different questions. Don't blend them.
 - **Assumptions are the enemy.** Find them. Name them. Test them.
 - **Comfortable with "I don't know."** Uncertainty named is better than certainty faked.
 

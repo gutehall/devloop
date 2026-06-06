@@ -1,6 +1,6 @@
 # Vision Protocol
 
-A structured thinking protocol for strategic future planning. Run this when exploring where a project should go over a 1–3 year horizon.
+A structured thinking protocol for strategic future planning. Run this when exploring where a project should go over a 6-month to 1-year horizon.
 
 ---
 
@@ -62,29 +62,29 @@ The future doesn't just come from the team's decisions. External forces shape it
 
 Work through each horizon separately. Don't blur them.
 
-### 1-Year Horizon
+### 6-Month Horizon
 
 *The near term. What's realistic given current momentum, team, and constraints.*
 
-- If the current trajectory continues, what does the project look like in 12 months?
-- What's the one thing that, if done well, would make the next year clearly successful?
+- If the current trajectory continues, what does the project look like in 6 months?
+- What's the one thing that, if done well, would make the next six months clearly successful?
 - What should be *stopped*, *paused*, or *handed off* to make room for that?
-- What's the biggest risk to the 1-year picture? What could derail it?
+- What's the biggest risk to the 6-month picture? What could derail it?
 
-Output: A concrete, honest description of 1-year state. Not aspirational — achievable.
+Output: A concrete, honest description of the 6-month state. Not aspirational — achievable.
 
-### 3-Year Horizon
+### 1-Year Horizon
 
 *The medium term. Where strategy bets start to matter.*
 
 - If you made the right bets, what does the project enable that it can't today?
 - What new user needs could emerge that this project is uniquely positioned to serve?
 - What would need to be true about the technology, the team, and the product to reach this?
-- What's the version of this project that you'd be proud of in 3 years?
+- What's the version of this project that you'd be proud of in 1 year?
 
-Push the user here. "More features" is not a 3-year horizon. Ask: *What fundamentally changes about what this project can do or who it serves?*
+Push the user here. "More features" is not a 1-year horizon. Ask: *What fundamentally changes about what this project can do or who it serves?*
 
-Output: 2–3 scenarios for the 3-year state. Identify which one the team is currently pointed at, and whether that's intentional.
+Output: 2–3 scenarios for the 1-year state. Identify which one the team is currently pointed at, and whether that's intentional.
 
 ---
 
@@ -106,7 +106,7 @@ Output: A short list of named bets with rationale. Explicitly note which are loa
 
 ## Phase 5: Capability Gaps
 
-The gap between the current state and the 3-year horizon reveals what would need to be built, hired, or decided.
+The gap between the current state and the 1-year horizon reveals what would need to be built, hired, or decided.
 
 For each horizon gap:
 - What technical capabilities don't exist yet that would be required?
@@ -116,7 +116,7 @@ For each horizon gap:
 
 Don't just list features. Capability gaps include: architecture decisions, missing integrations, team skills, operational maturity, and even product-market positioning.
 
-Output: A prioritized list of gaps, roughly categorized by: *must close in 1yr*, *need by 3yr*.
+Output: A prioritized list of gaps, roughly categorized by: *must close in 6mo*, *need by 1yr*.
 
 ---
 
@@ -169,8 +169,8 @@ After working through the phases, produce:
 
 ### Where we're going
 
-**1 year:** [Concrete, achievable state. One paragraph.]
-**3 years:** [The bigger shift. What's fundamentally different. One paragraph.]
+**6 months:** [Concrete, achievable state. One paragraph.]
+**1 year:** [The bigger shift. What's fundamentally different. One paragraph.]
 
 ### Strategic bets
 | Bet | Rationale | Type |
@@ -178,8 +178,8 @@ After working through the phases, produce:
 | [name] | [one sentence] | load-bearing / reversible |
 
 ### Capability gaps
-**Close in 1yr:** [...]
-**Need by 3yr:** [...]
+**Close in 6mo:** [...]
+**Need by 1yr:** [...]
 
 ### Improvement themes
 1. [Theme] — [why it matters long-term]
@@ -191,7 +191,7 @@ After working through the phases, produce:
 | [assumption] | confident / uncertain / risky | [signal] |
 
 ### Next planning horizon
-[What to focus on in the next 3–6 months, given all of the above. One paragraph.]
+[What to focus on in the next 1–3 months, given all of the above. One paragraph.]
 ```
 
 ---
@@ -205,7 +205,7 @@ A vision session is not a hype exercise. These standards apply throughout:
 - **Don't agree to be agreeable.** If the user's stated direction seems misaligned with the evidence, say so.
 - **Uncertainty is honest output.** "We don't know" is a valid and important finding.
 - **Specificity over generality.** "Better UX" is not a strategic direction. "Reduce the time to first value from 30 minutes to under 5" is.
-- **Short-term and long-term are different conversations.** Keep them separate. Don't let quarterly pressures collapse the 3-year view.
+- **Short-term and long-term are different conversations.** Keep them separate. Don't let quarterly pressures collapse the 1-year view.
 
 ---
 
