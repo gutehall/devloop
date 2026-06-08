@@ -21,11 +21,14 @@ The daily-driver variant. Linear MCP + the `linear` CLI for issue tracking, `gh`
 /standup → /next → implement → /done → /next → repeat
 ```
 
+Or run it unattended: `/loop /grind project` repeats the whole cycle until the project is drained.
+
 **What you get:**
 
 - `/standup` — yesterday / today / blocked, from Linear + GitHub
 - `/next` — project mode (whole Linear project on one branch) or issue mode (one branch per issue)
 - `/done` — ship project (one PR, multiple issues) or ship a single issue; CI, merge, pull main
+- `/grind` — one autonomous cycle (pick → implement → ship), no prompts; wrap in `/loop` to drain a whole project unattended
 - `/think`, `/vision` — reason through a problem or set strategic direction before planning
 - `/plan` — create Linear issues inline via MCP, with acceptance criteria
 - `/pr` — open a PR for review without merging
@@ -50,7 +53,9 @@ Same loop, different tracker. The Atlassian MCP server + the `jira` CLI for issu
 /standup → /next → implement → /done → /next → repeat
 ```
 
-The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/think`, `/vision`, `/plan`, `/pr`, `/issues`, `/triage`, `/estimate`, `/split`, `/scope`, `/bugs`, `/debt`, `/deps`, `/review`, `/sync`, `/whatchanged`, `/release`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
+Or run it unattended: `/loop /grind project` repeats the whole cycle until the project is drained.
+
+The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/grind`, `/think`, `/vision`, `/plan`, `/pr`, `/issues`, `/triage`, `/estimate`, `/split`, `/scope`, `/bugs`, `/debt`, `/deps`, `/review`, `/sync`, `/whatchanged`, `/release`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
 
 **Key behavior differences vs Linear:**
 
@@ -305,6 +310,29 @@ Reads current tracker state, drafts issues with titles, descriptions, and accept
 Stages, commits, pushes, waits for CI, merges with squash, deletes the branch, returns to main. Project mode runs `linear project complete` when no open issues remain. If push fails due to divergence, rebases and lists conflicts — never force-pushes without explicit instruction.
 
 For non-code work (documents, decks, research): closes issue(s) in Linear directly, optionally attaching links.
+
+### `/grind` — Autonomous one-cycle: pick → implement → ship
+
+```
+/grind project             # one cycle: highest-priority issue in the project
+/grind issue               # one cycle: highest-priority unblocked issue
+/loop /grind project       # drain the whole project, one issue per cycle
+/loop /grind issue         # repeat, one branch per issue
+```
+
+`/grind` is `/next` + implement + `/done` fused into a single command with **no interactive questions** — built so it can run under `/loop` unattended. It resolves scope from the argument, the current branch, or the default project (never prompts), picks the single highest-priority unblocked issue, branches from `main`, implements the minimal change, then pushes, opens the PR, waits for CI, and merges.
+
+Where a normal `/next`/`/done` would ask a human, `/grind` instead emits a clear **STOP LOOP** signal so the loop ends cleanly rather than hanging:
+
+| Condition | Behavior |
+|-----------|----------|
+| No unblocked work left | Stop loop (clean finish) |
+| Issue is non-code or ambiguous | Skip it, continue loop |
+| Needs a product decision | Stop loop, issue left In Progress |
+| Tests/build or CI fail | Stop loop — fix and re-run |
+| Rebase conflict | Stop loop, never force-pushes |
+
+Project mode reuses one day-branch (`<slug>-YYYY-MM-DD`) across cycles; issue mode is one branch per issue. Loop timing is self-paced — work duration varies, so there is nothing to poll on a clock. Use plain `/next`/`/done` when you want to stay in the loop yourself; use `/grind` when you want Claude to drive the whole cycle.
 
 ### `/standup` — Daily standup summary
 
