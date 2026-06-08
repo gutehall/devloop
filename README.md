@@ -66,6 +66,7 @@ The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/grin
 | `/next` / `/done` scope | Project or single issue (asked each time) | Epic (project) or single issue |
 | Start issue | `linear issue start` | `jira issue move` + `jira issue assign` |
 | Close issue | Auto-closed by `Closes FIN-X` in PR body (Linear's GitHub integration) | `jira issue move "Done"` after merge, or via the Jira GitHub app |
+| `/grind` close step | `Closes FIN-X` in PR body auto-closes on merge | `jira issue move "Done"` after merge if the GitHub app didn't transition it |
 | Sprints | Cycles + milestones | `jira sprint list/add` |
 | Grouping | Projects | Epics |
 | Priorities | Urgent / High / Medium / Low | Highest / High / Medium / Low / Lowest |
