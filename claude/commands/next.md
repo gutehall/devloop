@@ -64,9 +64,9 @@ Working on: ISSUE-12 — Add caching layer [urgent]
 Branch name: `<project-slug>-YYYY-MM-DD` (derive slug from project name; max 40 chars; lowercase, spaces → `-`, strip special chars).
 
 - If already on matching project branch for today, stay on it.
-- Otherwise ask: "Branch from `main` or `develop`?" — wait, then:
+- Otherwise branch from `main` (default; use `develop` if the repo has no `main`):
   ```bash
-  git checkout <main|develop>
+  git checkout main
   git pull
   git checkout -b <project-slug>-YYYY-MM-DD
   ```
@@ -111,9 +111,9 @@ Working on: ISSUE-12 — Add caching layer
 
 ### Issue branch (code work)
 
-- Ask: "Branch from `main` or `develop`?" — wait, then:
+- Branch from `main` (default; use `develop` if the repo has no `main`):
   ```bash
-  git checkout <main|develop>
+  git checkout main
   git pull
   linear branch <id>
   ```
@@ -174,6 +174,6 @@ If the user chooses "Product planning", ask what to focus on (backlog, features,
 
 ## Notes
 
-- Scope question comes **before** branch question and **before** loading work
+- Scope question comes **before** loading work; branching is automatic from `main`
 - Set default project with `linear project open "<name>"` for faster project mode
 - Match `/done` scope to `/next` scope: `/done project` vs `/done issue`

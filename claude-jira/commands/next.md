@@ -72,9 +72,9 @@ Then, **when you begin actually working** (writing code or producing the deliver
 Branch: `<epic-slug>-YYYY-MM-DD` (from epic summary; max 40 chars; slug rules as Linear project slug).
 
 - If already on matching epic branch for today, stay on it.
-- Otherwise ask: "Branch from `main` or `develop`?" — wait, then:
+- Otherwise branch from `main` (default; use `develop` if the repo has no `main`):
   ```bash
-  git checkout <main|develop>
+  git checkout main
   git pull
   git checkout -b <epic-slug>-YYYY-MM-DD
   ```
@@ -118,9 +118,9 @@ Working on: PROJ-12 — Add caching layer
 
 ### Issue branch (code work)
 
-- Ask: "Branch from `main` or `develop`?" — wait, then:
+- Branch from `main` (default; use `develop` if the repo has no `main`):
   ```bash
-  git checkout <main|develop>
+  git checkout main
   git pull
   ```
 - Derive slug from summary (lowercase, dashes, max 50 chars):
@@ -166,6 +166,6 @@ If the user chooses "Product planning", follow the product-planning skill.
 
 ## Notes
 
-- Scope question comes **before** branch question
+- Scope question comes **before** loading work; branching is automatic from `main`
 - Match `/done` scope: `/done project` vs `/done issue`
 - `jira me` for self-assignment
