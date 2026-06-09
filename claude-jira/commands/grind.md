@@ -58,8 +58,13 @@ jira issue view <key>
 
 Classify work type from summary/description/labels:
 - **Code work** → continue
-- **Non-code work** (doc, deck, plan, research, comms) → **SKIP**: move status back, print `grind: <key> is non-code — skipping, needs a human.` Continue loop; do not implement.
-- **Ambiguous** → SKIP same as non-code. Never guess on autonomous runs.
+- **Non-code work** (doc, deck, plan, research, comms) → **SKIP**: move it **out of the To Do queue** so the next cycle does not re-pick the same issue (which would spin the loop forever):
+  ```bash
+  jira issue move <key> "Backlog"
+  jira issue edit <key> --label needs-human --no-input
+  ```
+  Print `grind: <key> is non-code — moved to Backlog (needs-human), skipping.` Continue loop; do not implement.
+- **Ambiguous** → SKIP same as non-code (move to Backlog + `needs-human`). Never guess on autonomous runs.
 
 ### 3. Branch (code work)
 

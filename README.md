@@ -37,7 +37,7 @@ Or run it unattended: `/loop /grind project` repeats the whole cycle until the p
 - `/review`, `/sync`, `/whatchanged`, `/release` — review and ship cycles
 - `/diagnose`, `/sit` — structured thinking before/during work
 
-How it talks to Linear: Linear's hosted MCP server (`mcp.linear.app`) gives Claude structured access to issues, projects, cycles, comments, and documents. The `linear` CLI handles the things the MCP doesn't cover (branch creation, quick `--unblocked` listings).
+How it talks to Linear: Linear's hosted MCP server (`mcp.linear.app`) gives Claude structured access to issues, projects, cycles, comments, and documents. The `linear` CLI handles the things the MCP doesn't cover (branch creation, quick status-filtered listings).
 
 [Skip to installation →](#claude--linear-installation)
 
@@ -132,7 +132,21 @@ brew install gh
 gh auth login
 ```
 
-### 5. Windows variants
+### 5. Workflow statuses (required)
+
+The commands filter and transition issues by **exact, case-sensitive status name**. Your Linear team must have these statuses — or change the strings in the command files to match yours:
+
+| Status | Used by | Purpose |
+|--------|---------|---------|
+| `Ready for build` | `/next`, `/grind` | The queue the commands pick from. **Only issues in this status are picked up.** |
+| `In Progress` | `/next`, `/grind`, `/done` | Set when implementation starts. |
+| `In Review` | `/next`, `/grind` | Set while Claude reads/learns the issue. |
+| `Backlog` | `/grind` | Where `/grind` parks non-code or ambiguous issues so they leave the queue and a human can re-triage. |
+| `Done` | merge | Set by Linear's GitHub integration when the PR merges. |
+
+`/grind` also applies a **`needs-human`** label to issues it parks — create that label, or change the string in `grind.md`. If any name differs in your workspace, edit `commands/next.md`, `commands/grind.md`, `commands/done.md` (case-sensitive). Verify with `linear issues --status "Ready for build"` — it should return without error.
+
+### 6. Windows variants
 
 All the same tools work on Windows in PowerShell — use `Copy-Item -Recurse` instead of `cp -r`, and `winget install --id GitHub.cli` (or `scoop install gh`) for the GitHub CLI. Everything else is identical.
 
@@ -187,6 +201,20 @@ gh auth login
 
 Install the Jira GitHub app in your Jira workspace. Once connected, PRs that include `Closes PROJ-42` in the body auto-transition the issue to Done on merge. Without it, run `jira issue move PROJ-42 "Done"` manually after merge.
 
+### 6. Workflow statuses (required)
+
+The commands filter and transition issues by **exact status name**. Your Jira workflow must have these — or change the strings in the command files to match yours:
+
+| Status | Used by | Purpose |
+|--------|---------|---------|
+| `To Do` | `/next`, `/grind` | The queue the commands pick from. **Only issues in this status are picked up.** |
+| `In Progress` | `/next`, `/grind`, `/done` | Set when implementation starts. |
+| `In Review` | `/next`, `/grind` | Set while Claude reads/learns the issue. |
+| `Backlog` | `/grind` | Where `/grind` parks non-code or ambiguous issues so they leave the queue and a human can re-triage. |
+| `Done` | merge | Set after merge (GitHub app or `jira issue move`). |
+
+`/grind` also applies a **`needs-human`** label to parked issues. Jira status names are workflow-specific — confirm yours with `jira issue list -s"To Do"` and edit `commands/next.md`, `commands/grind.md` if they differ.
+
 ---
 
 # Daily Workflow
@@ -204,7 +232,7 @@ Shows what you completed yesterday, what's in progress, and any blocked issues. 
 Claude asks whether to work at **project** or **issue** level (same style as the `main` vs `develop` branch question). Skip with `/next project` or `/next issue`.
 
 - **Project** — loads a Linear project (or Jira epic), picks the highest-priority ready issue, uses one branch named `<slug>-YYYY-MM-DD`, advances issue-by-issue with repeated `/next project`
-- **Issue** — shows up to 3 unblocked issues to choose from, one branch per issue (`linear branch` / `PROJ-12-slug`)
+- **Issue** — shows up to 3 ready issues to choose from, one branch per issue (`linear branch` / `PROJ-12-slug`)
 
 ### Implementation loop
 
@@ -257,8 +285,8 @@ Conventions: examples use Linear issue IDs like `FIN-12`. Substitute `PROJ-12` f
 
 | Mode | What happens | Branch |
 |------|----------------|--------|
-| **Project** | Highest-priority unblocked issue in the project; repeat `/next project` for the next issue on the same branch | `phase-1-2026-05-22` |
-| **Issue** | Pick from up to 3 unblocked issues (or pass an ID); one issue per branch | `fin-42-add-caching-layer` |
+| **Project** | Highest-priority issue in the ready queue for the project; repeat `/next project` for the next issue on the same branch | `phase-1-2026-05-22` |
+| **Issue** | Pick from up to 3 ready issues (or pass an ID); one issue per branch | `fin-42-add-caching-layer` |
 
 Then asks `main` or `develop` (code work), marks the issue In Progress, reads it, and starts implementation. Set a default project with `linear project open "Phase 1"` for faster project mode.
 
@@ -316,24 +344,24 @@ For non-code work (documents, decks, research): closes issue(s) in Linear direct
 
 ```
 /grind project             # one cycle: highest-priority issue in the project
-/grind issue               # one cycle: highest-priority unblocked issue
+/grind issue               # one cycle: highest-priority ready issue
 /loop /grind project       # drain the whole project, one issue per cycle
 /loop /grind issue         # repeat, one branch per issue
 ```
 
-`/grind` is `/next` + implement + `/done` fused into a single command with **no interactive questions** — built so it can run under `/loop` unattended. It resolves scope from the argument, the current branch, or the default project (never prompts), picks the single highest-priority unblocked issue, branches from `main`, implements the minimal change, then pushes, opens the PR, waits for CI, and merges.
+`/grind` is `/next` + implement + `/done` fused into a single command with **no interactive questions** — built so it can run under `/loop` unattended. It resolves scope from the argument, the current branch, or the default project (never prompts), picks the single highest-priority issue from the ready queue, branches from `main`, implements the minimal change, then pushes, opens the PR, waits for CI, and merges.
 
 Where a normal `/next`/`/done` would ask a human, `/grind` instead emits a clear **STOP LOOP** signal so the loop ends cleanly rather than hanging:
 
 | Condition | Behavior |
 |-----------|----------|
-| No unblocked work left | Stop loop (clean finish) |
-| Issue is non-code or ambiguous | Skip it, continue loop |
+| No ready work left | Stop loop (clean finish) |
+| Issue is non-code or ambiguous | Move it to Backlog (+`needs-human`), continue loop |
 | Needs a product decision | Stop loop, issue left In Progress |
 | Tests/build or CI fail | Stop loop — fix and re-run |
 | Rebase conflict | Stop loop, never force-pushes |
 
-Project mode reuses one day-branch (`<slug>-YYYY-MM-DD`) across cycles; issue mode is one branch per issue. Loop timing is self-paced — work duration varies, so there is nothing to poll on a clock. Use plain `/next`/`/done` when you want to stay in the loop yourself; use `/grind` when you want Claude to drive the whole cycle.
+Project mode names the branch per day (`<slug>-YYYY-MM-DD`); since each cycle ships and merges its own PR, that branch is recreated fresh from `main` each cycle rather than reused. Issue mode is one branch per issue. Loop timing is self-paced — work duration varies, so there is nothing to poll on a clock. Use plain `/next`/`/done` when you want to stay in the loop yourself; use `/grind` when you want Claude to drive the whole cycle.
 
 ### `/standup` — Daily standup summary
 

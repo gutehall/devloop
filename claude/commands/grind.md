@@ -57,8 +57,12 @@ linear issue show <id>
 
 Classify work type from title/description/labels:
 - **Code work** → continue
-- **Non-code work** (doc, deck, plan, research, comms) → **SKIP**: set status back, print `grind: <id> is non-code — skipping, needs a human.` Continue loop (try next cycle); do not implement.
-- **Ambiguous** → SKIP same as non-code. Never guess on autonomous runs.
+- **Non-code work** (doc, deck, plan, research, comms) → **SKIP**: move it **out of the Ready-for-build queue** so the next cycle does not re-pick the same issue (which would spin the loop forever):
+  ```bash
+  linear issue update <id> --status "Backlog" --label "needs-human"
+  ```
+  Print `grind: <id> is non-code — moved to Backlog (needs-human), skipping.` Continue loop; do not implement.
+- **Ambiguous** → SKIP same as non-code (move to Backlog + `needs-human`). Never guess on autonomous runs.
 
 ### 3. Branch (code work)
 
