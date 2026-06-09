@@ -285,10 +285,10 @@ Conventions: examples use Linear issue IDs like `FIN-12`. Substitute `PROJ-12` f
 
 | Mode | What happens | Branch |
 |------|----------------|--------|
-| **Project** | Highest-priority issue in the ready queue for the project; repeat `/next project` for the next issue on the same branch | `phase-1-2026-05-22` |
-| **Issue** | Pick from up to 3 ready issues (or pass an ID); one issue per branch | `fin-42-add-caching-layer` |
+| **Project** | Highest-priority issue in **`Ready for build`** (`To Do` on Jira) for the project; repeat `/next project` for the next issue on the same branch | `phase-1-2026-05-22` |
+| **Issue** | Pick from up to 3 issues in **`Ready for build`** / `To Do` (or pass an ID); one issue per branch | `fin-42-add-caching-layer` |
 
-Then asks `main` or `develop` (code work), marks the issue In Progress, reads it, and starts implementation. Set a default project with `linear project open "Phase 1"` for faster project mode.
+Only issues in the ready status (`Ready for build` on Linear, `To Do` on Jira) are picked up — see [Workflow statuses](#5-workflow-statuses-required). The issue **stays in that status while Claude reads it**, then moves to **`In Progress`** when implementation actually starts. Branches automatically from `main`. Set a default project with `linear project open "Phase 1"` for faster project mode.
 
 ### `/think` — Reason through a problem before planning
 
@@ -336,7 +336,7 @@ Reads current tracker state, drafts issues with titles, descriptions, and accept
 | **Issue** | One PR, one issue | `Closes FIN-12` |
 | **Project** | One PR for the branch | `Closes FIN-10`, `Closes FIN-12`, … (every issue on the branch) |
 
-Stages, commits, pushes, waits for CI, merges with squash, deletes the branch, returns to main. Project mode runs `linear project complete` when no open issues remain. If push fails due to divergence, rebases and lists conflicts — never force-pushes without explicit instruction.
+Project mode collects the issues to close from those in **`In Progress`** plus issue IDs found in the branch's commits. The `Closes <ID>` lines move each issue to **`Done`** via the GitHub integration on merge. Stages, commits, pushes, waits for CI, merges with squash, deletes the branch, returns to main. Project mode runs `linear project complete` when no open issues remain. If push fails due to divergence, rebases and lists conflicts — never force-pushes without explicit instruction.
 
 For non-code work (documents, decks, research): closes issue(s) in Linear directly, optionally attaching links.
 
