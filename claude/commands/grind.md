@@ -25,6 +25,8 @@ Resolve scope in this order — do **not** prompt:
 
 If none resolve → **STOP LOOP**, print: `grind: scope unresolved — run /grind project or /grind issue once to seed.`
 
+**PR model:** `/grind` ships **one PR per issue every cycle**, in both scopes — even in project mode. This is intentional and differs from interactive `/done project`, which batches a whole branch into a single PR. Autonomous draining wants per-issue PRs so each gets its own CI gate and a failure isolates to one issue. "Project mode" here only changes *which queue* issues are picked from, not how they ship.
+
 ---
 
 ## Cycle
@@ -51,9 +53,9 @@ Pick the highest-priority issue in **Ready for build** assigned to you (CLI sort
 ### 2. Read and classify
 
 ```bash
-linear issue update <id> --status "In Review"
 linear issue show <id>
 ```
+(Leave the issue in **Ready for build** while reading — do not set it to In Review.)
 
 Classify work type from title/description/labels:
 - **Code work** → continue
@@ -107,7 +109,7 @@ Stage + commit (`ISSUE-12: …` per change; project mode may use `<project-slug>
 git push -u origin HEAD
 ```
 
-Push rejected → `git fetch origin && git rebase origin/<base>`. Conflicts → **STOP LOOP**, list files, do not force-push.
+Push rejected → follow the **github-cli** skill's "Push rejected (diverged history)" procedure; **conflicts → STOP LOOP**, list files, never force-push.
 
 Create the PR (`Closes <ID>` in body — required for Linear integration):
 ```bash

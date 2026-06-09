@@ -149,7 +149,7 @@ Same watch/merge/checkout/pull pattern as project path.
 
 ### If push is rejected (both code paths)
 
-Rebase on `<base>`; stop on conflicts; no force-push unless requested.
+Follow the **github-cli** skill's "Push rejected (diverged history)" procedure. On conflict, stop, list files, re-run `/done`. Never force-push.
 
 ---
 

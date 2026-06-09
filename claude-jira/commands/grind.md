@@ -25,6 +25,8 @@ Resolve scope in this order — do **not** prompt:
 
 If none resolve → **STOP LOOP**, print: `grind: scope unresolved — run /grind project or /grind issue once to seed.`
 
+**PR model:** `/grind` ships **one PR per issue every cycle**, in both scopes — even in project (epic) mode. This is intentional and differs from interactive `/done project`, which batches a whole branch into a single PR. Autonomous draining wants per-issue PRs so each gets its own CI gate and a failure isolates to one issue. "Project mode" here only changes *which queue* issues are picked from, not how they ship.
+
 ---
 
 ## Cycle
@@ -51,10 +53,10 @@ Pick the highest-priority To Do issue assigned to you.
 ### 2. Read and classify
 
 ```bash
-jira issue move <key> "In Review"
 jira issue assign <key> "$(jira me)"
 jira issue view <key>
 ```
+(Leave the issue in **To Do** while reading — do not move it to In Review.)
 
 Classify work type from summary/description/labels:
 - **Code work** → continue
@@ -109,7 +111,7 @@ Stage + commit (`PROJ-12: …` per change; project mode may use `<epic-slug>: <s
 git push -u origin HEAD
 ```
 
-Push rejected → `git fetch origin && git rebase origin/<base>`. Conflicts → **STOP LOOP**, list files, do not force-push.
+Push rejected → follow the **github-cli** skill's "Push rejected (diverged history)" procedure; **conflicts → STOP LOOP**, list files, never force-push.
 
 Create the PR (reference the issue key in title/body so the Jira GitHub integration links it):
 ```bash

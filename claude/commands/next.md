@@ -46,10 +46,9 @@ Pick the highest-priority issue in **Ready for build** in a Linear project and w
 2. **If no issue override:** run `linear issues --project "<project>" --status "Ready for build"`.
 3. **Select the highest-priority issue** — do not present a pick list. Priority order: urgent → high → medium → low → none. Break ties by CLI sort order.
 4. If **Ready for build** returns nothing, see [No work available](#no-work-available). Do **not** fall back to other statuses.
-5. Run `linear issue update <id> --status "In Review"` — you are now reading/learning the issue.
-6. Run `linear issue show <id>` — read description and acceptance criteria.
+5. Run `linear issue show <id>` — read description and acceptance criteria. Leave the issue in **Ready for build** while you read; do not change status yet.
 
-Set the issue to **In Progress** (`linear issue start <id>`, or `linear issue update <id> --status "In Progress"`) once you begin actually working it.
+Set the issue to **In Progress** (`linear issue start <id>`) once you begin actually working it. (`In Review` is for an open PR under review, not for reading.)
 
 Announce:
 
@@ -95,12 +94,11 @@ Find a **Ready for build** issue, branch per issue, implement one issue at a tim
 
 When the user selects an issue (or provided `/next issue ISSUE-12`):
 
-1. Run `linear issue update <id> --status "In Review"` — you are now reading/learning the issue
-2. Run `linear issue show <id>` — read description, acceptance criteria
+1. Run `linear issue show <id>` — read description, acceptance criteria. Leave it in **Ready for build** while you read.
 
 Then, **when you begin actually working** (writing code or producing the deliverable):
 
-3. Run `linear issue start <id>` — assigns to you + sets **In Progress**
+2. Run `linear issue start <id>` — assigns to you + sets **In Progress**
 
 Announce:
 
@@ -135,7 +133,7 @@ If ambiguous, ask: "Is this code work or non-code work?"
 ### Path A: Code Work
 
 1. Set up the branch per scope (project or issue rules above)
-2. Read description and acceptance criteria (issue is **In Review** while you read)
+2. Read description and acceptance criteria (issue stays in **Ready for build** while you read)
 3. Explore relevant code
 4. Move the issue to **In Progress**, then implement — minimal solution, follow existing patterns
 
@@ -143,7 +141,7 @@ If ambiguous, ask: "Is this code work or non-code work?"
 
 ### Path B: Non-Code Work
 
-1. Read description and acceptance criteria (issue is **In Review** while you read)
+1. Read description and acceptance criteria (issue stays in **Ready for build** while you read)
 2. Identify the deliverable
 3. Move the issue to **In Progress**, then help produce it
 4. When ready, tell the user to run `/done` with the same scope they used (`/done project` or `/done issue`)

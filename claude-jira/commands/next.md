@@ -59,13 +59,12 @@ Working on: PROJ-12 — Add caching layer [High]
 
 ### Start work
 
-1. `jira issue move <id> "In Review"` — you are now reading/learning the issue
+1. `jira issue view <id>` — read criteria. Leave it in **To Do** while you read.
 2. `jira issue assign <id> "$(jira me)"`
-3. `jira issue view <id>` — read criteria
 
 Then, **when you begin actually working** (writing code or producing the deliverable):
 
-4. `jira issue move <id> "In Progress"`
+3. `jira issue move <id> "In Progress"`
 
 ### Project branch (code work)
 
@@ -101,13 +100,12 @@ Find a To Do issue, branch per issue, implement one at a time. `/done issue` shi
 
 ### Starting work
 
-1. `jira issue move <key> "In Review"` — you are now reading/learning the issue
+1. `jira issue view <key>` — read criteria. Leave it in **To Do** while you read.
 2. `jira issue assign <key> "$(jira me)"`
-3. `jira issue view <key>` — read criteria
 
 Then, **when you begin actually working** (writing code or producing the deliverable):
 
-4. `jira issue move <key> "In Progress"`
+3. `jira issue move <key> "In Progress"`
 
 Announce:
 
@@ -142,11 +140,11 @@ If ambiguous, ask: "Is this code work or non-code work?"
 
 ### Path A: Code Work
 
-Set up branch per scope, read criteria (issue **In Review** while reading), explore code, move to **In Progress**, then implement minimally.
+Set up branch per scope, read criteria (issue stays in **To Do** while reading), explore code, move to **In Progress**, then implement minimally.
 
 ### Path B: Non-Code Work
 
-Read criteria (issue **In Review** while reading), move to **In Progress**, then produce the deliverable; run `/done project` or `/done issue` when ready. No git branch.
+Read criteria (issue stays in **To Do** while reading), move to **In Progress**, then produce the deliverable; run `/done project` or `/done issue` when ready. No git branch.
 
 ---
 

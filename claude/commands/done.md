@@ -50,7 +50,7 @@ Wait for the answer before pushing, creating a PR, or closing issues.
 
 ```bash
 linear project show "<project>"
-linear issues --project "<project>" --status in-progress
+linear issues --project "<project>" --status "In Progress"
 git log --oneline <base>..HEAD
 ```
 
@@ -232,10 +232,7 @@ git log --oneline -5
 
 ### If push is rejected (both code paths)
 
-1. `git fetch origin` and assess gap
-2. `git rebase origin/<base-branch>`
-3. Conflicts → **stop**, list files, tell user to resolve and re-run `/done`
-4. Do **not** force-push unless explicitly requested
+Follow the **github-cli** skill's "Push rejected (diverged history)" procedure. On conflict, stop, list files, tell the user to resolve and re-run `/done`. Never force-push.
 
 ---
 

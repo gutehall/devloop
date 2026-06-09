@@ -120,6 +120,17 @@ gh pr view 123
 gh pr diff 123
 ```
 
+## Push rejected (diverged history)
+
+Canonical procedure when `git push` is rejected because the remote branch moved on. All commands reference this — do not re-spell it.
+
+1. `git fetch origin`, then check the gap: `git log --oneline HEAD..origin/<branch>`
+2. `git rebase origin/<base>` — rebase, **never** merge
+3. **Conflicts → stop. List the conflicting files. Do not auto-resolve.** The caller decides the outcome:
+   - interactive command (`/pr`, `/done`) → tell the user to resolve, run `git rebase --continue`, then re-run the command
+   - autonomous loop (`/grind`) → **STOP LOOP**
+4. **Never force-push** unless the user explicitly requests it.
+
 ## Related Skills
 
 - **jira-cli** — for Jira issue management

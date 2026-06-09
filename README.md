@@ -140,7 +140,7 @@ The commands filter and transition issues by **exact, case-sensitive status name
 |--------|---------|---------|
 | `Ready for build` | `/next`, `/grind` | The queue the commands pick from. **Only issues in this status are picked up.** |
 | `In Progress` | `/next`, `/grind`, `/done` | Set when implementation starts. |
-| `In Review` | `/next`, `/grind` | Set while Claude reads/learns the issue. |
+| `In Review` | GitHub integration | Issue under PR review — set automatically when the PR opens (if your Linear↔GitHub integration is configured for it). The commands no longer set this while reading. |
 | `Backlog` | `/grind` | Where `/grind` parks non-code or ambiguous issues so they leave the queue and a human can re-triage. |
 | `Done` | merge | Set by Linear's GitHub integration when the PR merges. |
 
@@ -209,7 +209,7 @@ The commands filter and transition issues by **exact status name**. Your Jira wo
 |--------|---------|---------|
 | `To Do` | `/next`, `/grind` | The queue the commands pick from. **Only issues in this status are picked up.** |
 | `In Progress` | `/next`, `/grind`, `/done` | Set when implementation starts. |
-| `In Review` | `/next`, `/grind` | Set while Claude reads/learns the issue. |
+| `In Review` | GitHub app | Issue under PR review — set when the PR opens (if the Jira GitHub app transitions it). The commands no longer set this while reading. |
 | `Backlog` | `/grind` | Where `/grind` parks non-code or ambiguous issues so they leave the queue and a human can re-triage. |
 | `Done` | merge | Set after merge (GitHub app or `jira issue move`). |
 
@@ -361,7 +361,7 @@ Where a normal `/next`/`/done` would ask a human, `/grind` instead emits a clear
 | Tests/build or CI fail | Stop loop — fix and re-run |
 | Rebase conflict | Stop loop, never force-pushes |
 
-Project mode names the branch per day (`<slug>-YYYY-MM-DD`); since each cycle ships and merges its own PR, that branch is recreated fresh from `main` each cycle rather than reused. Issue mode is one branch per issue. Loop timing is self-paced — work duration varies, so there is nothing to poll on a clock. Use plain `/next`/`/done` when you want to stay in the loop yourself; use `/grind` when you want Claude to drive the whole cycle.
+Unlike interactive `/done project` (which batches a whole branch into one PR), `/grind` ships **one PR per issue every cycle** in both scopes — so each issue gets its own CI gate and failures isolate to a single issue. Project mode names the branch per day (`<slug>-YYYY-MM-DD`); since each cycle ships and merges its own PR, that branch is recreated fresh from `main` each cycle rather than reused. Issue mode is one branch per issue. Loop timing is self-paced — work duration varies, so there is nothing to poll on a clock. Use plain `/next`/`/done` when you want to stay in the loop yourself; use `/grind` when you want Claude to drive the whole cycle.
 
 ### `/standup` — Daily standup summary
 

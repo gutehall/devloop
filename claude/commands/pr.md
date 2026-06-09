@@ -46,11 +46,7 @@ For completed work, prefer `/done` — it handles commit, push, PR, and offers `
 
 ## If push fails due to diverged history
 
-1. Run `git fetch origin` then check the gap: `git log --oneline HEAD..origin/<branch>`
-2. Run `git rebase origin/<base>` (rebase, not merge)
-3. If conflicts appear: list conflicting files and stop — do not auto-resolve
-4. Tell the user: "Conflicts in: `<files>`. Resolve, then `git rebase --continue`, then run `/pr` again."
-5. Never force-push unless the user explicitly requests it
+Follow the **github-cli** skill's "Push rejected (diverged history)" procedure. On conflict, tell the user: "Conflicts in `<files>`. Resolve, run `git rebase --continue`, then run `/pr` again." Never force-push.
 
 ## Notes
 
