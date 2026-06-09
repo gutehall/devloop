@@ -1,87 +1,105 @@
 # DevLoop
 
-A set of Claude Code slash commands that implement the full development loop — pick work → branch → implement → PR → merge — entirely inside Claude Code, with no browser or second terminal window. Work at **project** level (one branch, many issues) or **issue** level (one branch per issue).
+Claude Code slash commands that run the whole development loop — **pick work → branch → implement → PR → merge** — without leaving the terminal. No browser, no second window.
 
-Two variants, same workflow, different issue tracker:
+Work at **project** level (one branch, many issues) or **issue** level (one branch per issue). Two variants, same workflow, different issue tracker:
 
 | Variant | Issue tracker | Directory |
-|---------|--------------|-----------|
+|---------|---------------|-----------|
 | **Claude + Linear** (primary) | [Linear](https://linear.app) | `claude/` |
 | **Claude + Jira** | [Jira](https://www.atlassian.com/software/jira) | `claude-jira/` |
 
+Pick one per project — install `claude/` **or** `claude-jira/`, not both.
+
+## Contents
+
+- [How it works](#how-it-works)
+- [Commands at a glance](#commands-at-a-glance)
+- [Linear vs Jira](#linear-vs-jira)
+- [Installation](#installation) — [Linear](#linear-installation) · [Jira](#jira-installation)
+- [Daily workflow](#daily-workflow)
+- [Command reference](#command-reference)
+
 ---
 
-## Claude + Linear
+## How it works
 
-The daily-driver variant. Linear MCP + the `linear` CLI for issue tracking, `gh` for GitHub.
-
-**Daily loop:**
+The daily loop, identical in both variants:
 
 ```
 /standup → /next → implement → /done → /next → repeat
 ```
 
-Or run it unattended: `/loop /grind project` repeats the whole cycle until the project is drained.
+Or hand the whole cycle to Claude and walk away:
 
-**What you get:**
+```
+/loop /grind project       # drain a project, one issue per cycle, until empty
+/loop /autopilot project   # same, but only issues labelled auto-claude
+```
 
-- `/standup` — yesterday / today / blocked, from Linear + GitHub
-- `/next` — project mode (whole Linear project on one branch) or issue mode (one branch per issue)
-- `/done` — ship project (one PR, multiple issues) or ship a single issue; CI, merge, pull main
-- `/grind` — one autonomous cycle (pick → implement → ship), no prompts; wrap in `/loop` to drain a whole project unattended
-- `/autopilot` — `/grind` hard-gated to issues labelled `auto-claude`; for an unsupervised instance that may only touch explicitly allowlisted work
-- `/think`, `/vision` — reason through a problem or set strategic direction before planning
-- `/plan` — create Linear issues inline via MCP, with acceptance criteria
-- `/pr` — open a PR for review without merging
-- `/issues`, `/triage`, `/estimate`, `/split`, `/scope` — backlog browsing and grooming
-- `/bugs`, `/debt`, `/deps` — scan the codebase and create Linear issues
-- `/review`, `/sync`, `/whatchanged`, `/release` — review and ship cycles
-- `/diagnose`, `/sit` — structured thinking before/during work
-
-How it talks to Linear: Linear's hosted MCP server (`mcp.linear.app`) gives Claude structured access to issues, projects, cycles, comments, and documents. The `linear` CLI handles the things the MCP doesn't cover (branch creation, quick status-filtered listings).
-
-[Skip to installation →](#claude--linear-installation)
+Under the hood: the tracker's hosted MCP server gives Claude structured read access (issues, projects, comments), and the CLI (`linear` / `jira`) handles writes the MCP doesn't — branch creation, status moves, status-filtered listings. `gh` drives GitHub.
 
 ---
 
-## Claude + Jira
+## Commands at a glance
 
-Same loop, different tracker. The Atlassian MCP server + the `jira` CLI for issue tracking, `gh` for GitHub.
+| Command | What it does |
+|---------|--------------|
+| **Core loop** | |
+| `/next` | Pick the next ready issue and start — project or issue scope |
+| `/done` | Ship: commit, push, PR, CI, squash-merge, return to main |
+| `/grind` | One autonomous cycle (pick → implement → ship), no prompts; wrap in `/loop` |
+| `/autopilot` | `/grind` restricted to issues labelled `auto-claude` — for an unsupervised instance |
+| `/pr` | Open a PR for review without merging |
+| **Day-to-day** | |
+| `/standup` | Yesterday / today / blocked, from tracker + GitHub |
+| `/sync` | Reconcile tracker state with GitHub (merged PRs, stale issues) |
+| `/whatchanged` | Management progress report since the last run |
+| **Planning** | |
+| `/think` | Reason through a problem before any issues exist |
+| `/vision` | Strategic 1–3 year direction for a project |
+| `/plan` | Draft and create issues with acceptance criteria |
+| `/scope` | Audit a project for gaps and unclear issues |
+| `/split` | Break a large issue into ordered sub-issues |
+| `/estimate` | Bulk t-shirt-size unestimated issues |
+| `/triage` | Groom issues missing priority / labels / estimate |
+| `/issues` | Browse and filter issues by project |
+| **Code health** | |
+| `/bugs` | Scan the codebase for bugs → issues |
+| `/debt` | Scan for tech debt → issues |
+| `/deps` | Audit dependencies (security + outdated) → issues |
+| **Review & ship** | |
+| `/review` | Review an open PR (diff, CI, approve / comment) |
+| `/release` | Generate a changelog and cut a GitHub release |
+| **Thinking** | |
+| `/diagnose` | Root-cause a bug before touching code |
+| `/sit` | Stop, inspect, think — mid-task self-audit |
 
-**Daily loop:**
+Full detail per command in the [Command reference](#command-reference).
 
-```
-/standup → /next → implement → /done → /next → repeat
-```
+---
 
-Or run it unattended: `/loop /grind project` repeats the whole cycle until the project is drained.
+## Linear vs Jira
 
-The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/grind`, `/autopilot`, `/think`, `/vision`, `/plan`, `/pr`, `/issues`, `/triage`, `/estimate`, `/split`, `/scope`, `/bugs`, `/debt`, `/deps`, `/review`, `/sync`, `/whatchanged`, `/release`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
-
-**Key behavior differences vs Linear:**
+The command set and workflow are identical; only the tracker calls differ.
 
 | | Claude + Linear | Claude + Jira |
 |---|---|---|
-| Branch creation (issue mode) | `linear branch ISSUE-1` | `git checkout -b PROJ-1-slug` |
-| Branch creation (project mode) | `<project-slug>-YYYY-MM-DD` | `<epic-slug>-YYYY-MM-DD` |
-| `/next` / `/done` scope | Project or single issue (asked each time) | Epic (project) or single issue |
-| Start issue | `linear issue start` | `jira issue move` + `jira issue assign` |
-| Close issue | Auto-closed by `Closes FIN-X` in PR body (Linear's GitHub integration) | `jira issue move "Done"` after merge, or via the Jira GitHub app |
-| `/grind` close step | `Closes FIN-X` in PR body auto-closes on merge | `jira issue move "Done"` after merge if the GitHub app didn't transition it |
-| Sprints | Cycles + milestones | `jira sprint list/add` |
+| Tracker integration | Linear MCP + `linear` CLI | Atlassian MCP + `jira` CLI |
 | Grouping | Projects | Epics |
+| Branch (issue mode) | `linear branch ISSUE-1` | `git checkout -b PROJ-1-slug` |
+| Branch (project mode) | `<project-slug>-YYYY-MM-DD` | `<epic-slug>-YYYY-MM-DD` |
+| Ready status | `Ready for build` | `To Do` |
+| Start issue | `linear issue start` | `jira issue move` + `jira issue assign` |
+| Close issue | `Closes FIN-X` in PR body (GitHub integration) | `jira issue move "Done"` after merge, or Jira GitHub app |
+| Sprints | Cycles + milestones | `jira sprint list/add` |
 | Priorities | Urgent / High / Medium / Low | Highest / High / Medium / Low / Lowest |
-| Tracker integration | Linear MCP + CLI | Atlassian MCP + Jira CLI |
-
-[Skip to installation →](#claude--jira-installation)
 
 ---
 
 # Installation
 
-Pick one variant per project — install either `claude/` (Linear) or `claude-jira/` (Jira), not both.
-
-## Claude + Linear installation
+## Linear installation
 
 ### 1. Get the commands
 
@@ -107,16 +125,9 @@ npm install -g @dabble/linear-cli
 linear login
 ```
 
-`linear login` will:
-1. Ask where to save credentials (project or global)
-2. Open Linear API settings in your browser
-3. Prompt you to paste your API key
-4. Let you select your team
-5. Save config
+`linear login` walks you through saving credentials (project or global), pasting an API key, and selecting a team. Config is layered: `~/.linear` (global) loads first, then `./.linear` (project) overrides it; `LINEAR_API_KEY` / `LINEAR_TEAM` env vars are fallbacks.
 
-Config is layered: `~/.linear` (global) is loaded first, then `./.linear` (project-level) overrides it. Env vars (`LINEAR_API_KEY`, `LINEAR_TEAM`) are used as fallbacks.
-
-**Multiple teams:** if you work across several Linear teams, set `team=TEAMKEY` in each project's `.linear` file. Run `linear whoami` to confirm which team is active.
+**Multiple teams:** set `team=TEAMKEY` in each project's `.linear`. Run `linear whoami` to confirm the active team.
 
 ### 3. Linear MCP server
 
@@ -124,7 +135,7 @@ Config is layered: `~/.linear` (global) is loaded first, then `./.linear` (proje
 claude mcp add --transport http linear-server https://mcp.linear.app/mcp
 ```
 
-Then run `/mcp` once you've opened a Claude Code session to go through the authentication flow.
+Then run `/mcp` in a Claude Code session to authenticate.
 
 ### 4. GitHub CLI
 
@@ -135,25 +146,25 @@ gh auth login
 
 ### 5. Workflow statuses (required)
 
-The commands filter and transition issues by **exact, case-sensitive status name**. Your Linear team must have these statuses — or change the strings in the command files to match yours:
+The commands filter and transition issues by **exact, case-sensitive status name**. Your Linear team must have these — or change the strings in the command files to match yours:
 
 | Status | Used by | Purpose |
 |--------|---------|---------|
-| `Ready for build` | `/next`, `/grind` | The queue the commands pick from. **Only issues in this status are picked up.** |
+| `Ready for build` | `/next`, `/grind` | The queue commands pick from. **Only issues here are picked up.** |
 | `In Progress` | `/next`, `/grind`, `/done` | Set when implementation starts. |
-| `In Review` | GitHub integration | Issue under PR review — set automatically when the PR opens (if your Linear↔GitHub integration is configured for it). The commands no longer set this while reading. |
-| `Backlog` | `/grind` | Where `/grind` parks non-code or ambiguous issues so they leave the queue and a human can re-triage. |
-| `Done` | merge | Set by Linear's GitHub integration when the PR merges. |
+| `In Review` | GitHub integration | Issue under PR review — set automatically when the PR opens (if configured). Commands no longer set this while reading. |
+| `Backlog` | `/grind` | Where `/grind` parks non-code / ambiguous issues so they leave the queue for a human. |
+| `Done` | merge | Set by the GitHub integration when the PR merges. |
 
-`/grind` also applies a **`needs-human`** label to issues it parks — create that label, or change the string in `grind.md`. If any name differs in your workspace, edit `commands/next.md`, `commands/grind.md`, `commands/done.md` (case-sensitive). Verify with `linear issues --status "Ready for build"` — it should return without error.
+`/grind` also tags parked issues with a **`needs-human`** label (and `/autopilot` requires an **`auto-claude`** label) — create these, or change the strings in the command files. Verify with `linear issues --status "Ready for build"` — it should return without error.
 
-### 6. Windows variants
+### 6. Windows
 
-All the same tools work on Windows in PowerShell — use `Copy-Item -Recurse` instead of `cp -r`, and `winget install --id GitHub.cli` (or `scoop install gh`) for the GitHub CLI. Everything else is identical.
+Same tools work in PowerShell — use `Copy-Item -Recurse` instead of `cp -r`, and `winget install --id GitHub.cli` (or `scoop install gh`). Everything else is identical.
 
 ---
 
-## Claude + Jira installation
+## Jira installation
 
 ### 1. Get the commands
 
@@ -187,9 +198,7 @@ jira init
 claude mcp add --transport sse atlassian-server https://mcp.atlassian.com/v1/sse
 ```
 
-Then run `/mcp` once you've opened a Claude Code session to go through the OAuth flow — Atlassian opens in your browser, you grant access to the Jira site, and the token is stored.
-
-The Atlassian MCP gives Claude richer access for reads (search issues, fetch comments, follow links across projects/boards) than the CLI alone. The slash commands in `claude-jira/` still use the `jira` CLI for writes (status moves, assignments, branch creation), so both are required.
+Then run `/mcp` in a Claude Code session for the OAuth flow. The MCP gives Claude richer reads (search, comments, cross-project links); the `jira` CLI handles writes (status moves, assignments, branch creation). Both are required.
 
 ### 4. GitHub CLI
 
@@ -198,77 +207,64 @@ brew install gh
 gh auth login
 ```
 
-### 5. GitHub-Jira integration (optional)
+### 5. GitHub–Jira integration (optional)
 
-Install the Jira GitHub app in your Jira workspace. Once connected, PRs that include `Closes PROJ-42` in the body auto-transition the issue to Done on merge. Without it, run `jira issue move PROJ-42 "Done"` manually after merge.
+Install the Jira GitHub app. Once connected, PRs with `Closes PROJ-42` in the body auto-transition the issue to Done on merge. Without it, run `jira issue move PROJ-42 "Done"` after merge.
 
 ### 6. Workflow statuses (required)
 
-The commands filter and transition issues by **exact status name**. Your Jira workflow must have these — or change the strings in the command files to match yours:
+The commands filter and transition issues by **exact status name**. Your Jira workflow must have these — or change the strings in the command files:
 
 | Status | Used by | Purpose |
 |--------|---------|---------|
-| `To Do` | `/next`, `/grind` | The queue the commands pick from. **Only issues in this status are picked up.** |
+| `To Do` | `/next`, `/grind` | The queue commands pick from. **Only issues here are picked up.** |
 | `In Progress` | `/next`, `/grind`, `/done` | Set when implementation starts. |
-| `In Review` | GitHub app | Issue under PR review — set when the PR opens (if the Jira GitHub app transitions it). The commands no longer set this while reading. |
-| `Backlog` | `/grind` | Where `/grind` parks non-code or ambiguous issues so they leave the queue and a human can re-triage. |
+| `In Review` | GitHub app | Issue under PR review — set when the PR opens (if the app transitions it). Commands no longer set this while reading. |
+| `Backlog` | `/grind` | Where `/grind` parks non-code / ambiguous issues so they leave the queue for a human. |
 | `Done` | merge | Set after merge (GitHub app or `jira issue move`). |
 
-`/grind` also applies a **`needs-human`** label to parked issues. Jira status names are workflow-specific — confirm yours with `jira issue list -s"To Do"` and edit `commands/next.md`, `commands/grind.md` if they differ.
+`/grind` tags parked issues `needs-human` (and `/autopilot` requires `auto-claude`). Jira status names are workflow-specific — confirm yours with `jira issue list -s"To Do"` and edit the command files if they differ.
 
 ---
 
-# Daily Workflow
+# Daily workflow
 
 ### Morning
 
 ```
 /standup
 ```
-Shows what you completed yesterday, what's in progress, and any blocked issues. Pulls from both the tracker and GitHub.
+What you finished yesterday, what's in progress, what's blocked — from tracker + GitHub. On Monday the lookback extends to cover the weekend.
 
 ```
 /next
 ```
-Claude asks whether to work at **project** or **issue** level (same style as the `main` vs `develop` branch question). Skip with `/next project` or `/next issue`.
+Claude asks **project** or **issue** scope (skip with `/next project` / `/next issue`):
 
-- **Project** — loads a Linear project (or Jira epic), picks the highest-priority ready issue, uses one branch named `<slug>-YYYY-MM-DD`, advances issue-by-issue with repeated `/next project`
-- **Issue** — shows up to 3 ready issues to choose from, one branch per issue (`linear branch` / `PROJ-12-slug`)
+- **Project** — loads a project/epic, picks the highest-priority ready issue, one branch `<slug>-YYYY-MM-DD`, advance with repeated `/next project`
+- **Issue** — pick from up to 3 ready issues (or pass an ID), one branch per issue
 
 ### Implementation loop
 
-1. Claude reads the issue, explores the codebase, and implements
-2. Review what will be committed: `!git status`, `!git diff`
-3. Ship it: `/done` (match scope: `/done project` or `/done issue`)
+1. Claude reads the issue, explores the code, implements
+2. Review what'll be committed: `!git status`, `!git diff`
+3. Ship: `/done` (match scope — `/done project` or `/done issue`)
 4. Continue: `/next` with the same scope
 
-**Issue mode:** `/done issue` stages, commits, pushes, opens one PR with `Closes FIN-X`, waits for CI, merges, deletes the branch, returns to main.
-
-**Project mode:** `/done project` does the same for the whole project branch — one PR with a `Closes FIN-X` line per issue worked on, then `linear project complete` when the backlog is clear.
-
-If CI fails: `/done` stops and tells you what failed. Fix the code, push to the same branch, run `/done` again with the same scope — it picks up the existing PR.
-
-Use `/pr` instead of `/done` when you want a teammate to review before merging.
+If CI fails, `/done` stops and reports what broke. Fix, push to the same branch, re-run `/done` — it reuses the existing PR. Use `/pr` instead of `/done` when you want a teammate to review before merge.
 
 ### Planning new work
 
 ```
 /plan "Add retry logic to the analyzer"
 ```
-Claude reads current tracker state, asks clarifying questions if needed, drafts issues with descriptions and acceptance criteria, creates them directly, then suggests `/next project` or `/next issue <ID>` to start immediately.
-
-### End of day (optional)
-
-```
-/standup
-```
-Summary of what shipped, what's still open, any PRs pending review.
+Claude reads tracker state, asks clarifying questions, drafts issues with acceptance criteria, creates them, and suggests `/next` to start.
 
 ---
 
-# Commands Reference
+# Command reference
 
-Conventions: examples use Linear issue IDs like `FIN-12`. Substitute `PROJ-12` for the Jira variant.
+Conventions: examples use Linear IDs like `FIN-12`. Substitute `PROJ-12` for Jira.
 
 ### `/next` — Start the next piece of work
 
@@ -280,45 +276,14 @@ Conventions: examples use Linear issue IDs like `FIN-12`. Substitute `PROJ-12` f
 /next issue FIN-12         # Specific issue
 ```
 
-**Scope question** (unless you pass `project` or `issue`, or the current branch already implies mode):
-
-> Work at **project** level or on a **single issue**?
-
 | Mode | What happens | Branch |
-|------|----------------|--------|
-| **Project** | Highest-priority issue in **`Ready for build`** (`To Do` on Jira) for the project; repeat `/next project` for the next issue on the same branch | `phase-1-2026-05-22` |
-| **Issue** | Pick from up to 3 issues in **`Ready for build`** / `To Do` (or pass an ID); one issue per branch | `fin-42-add-caching-layer` |
+|------|--------------|--------|
+| **Project** | Highest-priority ready issue in the project; repeat `/next project` for the next on the same branch | `phase-1-2026-05-22` |
+| **Issue** | Pick from up to 3 ready issues (or pass an ID); one branch per issue | `fin-42-add-caching-layer` |
 
-Only issues in the ready status (`Ready for build` on Linear, `To Do` on Jira) are picked up — see [Workflow statuses](#5-workflow-statuses-required). The issue **stays in that status while Claude reads it**, then moves to **`In Progress`** when implementation actually starts. Branches automatically from `main`. Set a default project with `linear project open "Phase 1"` for faster project mode.
-
-### `/think` — Reason through a problem before planning
-
-```
-/think                        # Open-ended exploration
-/think "Add X feature"        # Focused reasoning about a specific idea
-```
-
-A structured conversation to think through what you actually want to build and why — before creating any issues. No tracker reads or writes. Asks grounding questions (what's the problem, who's affected, what does good look like), explores the space (why now, simplest version, what could go wrong, alternatives, what's out of scope), then synthesizes a brief you can hand straight to `/plan`.
-
-### `/vision` — Strategic future planning for a project
-
-```
-/vision                          # Open-ended future exploration
-/vision "1 year"                 # Focus on the near-term horizon
-/vision "scale"                  # Explore a strategic theme
-/vision "compete with X"         # Explore competitive positioning
-```
-
-Deep, honest conversation about where the project is heading on 1 and 3 year horizons. Reads current state (open projects, `product.md`, README, recent git log), then works through forces of change, capability gaps, strategic bets, and assumption stress-tests. Produces a structured vision document with a "next planning horizon" section that hands off to `/plan`. No tracker writes during the session.
-
-### `/plan` — Plan work and create issues
-
-```
-/plan                        # Open-ended planning session
-/plan "Add retry logic"      # Focused planning for a specific area
-```
-
-Reads current tracker state, drafts issues with titles, descriptions, and acceptance criteria, creates them directly, then suggests `/next project` or `/next issue <ID>`. In issue mode, work stays one PR per issue; in project mode, multiple issues can ship in one PR. L/XL issues get broken into sub-issues.
+- Only issues in the ready status (`Ready for build` / `To Do`) are picked up — see [Workflow statuses](#5-workflow-statuses-required).
+- The issue **stays in that status while Claude reads it**, then moves to `In Progress` when implementation starts.
+- Branches automatically from `main`. Set a default project with `linear project open "Phase 1"`.
 
 ### `/done` — Ship completed work
 
@@ -330,41 +295,43 @@ Reads current tracker state, drafts issues with titles, descriptions, and accept
 /done issue FIN-12         # Specific issue
 ```
 
-**Scope question** matches `/next` — use the same mode you started with.
+Match the scope you started `/next` with.
 
 | Mode | PR | Closes |
 |------|-----|--------|
 | **Issue** | One PR, one issue | `Closes FIN-12` |
 | **Project** | One PR for the branch | `Closes FIN-10`, `Closes FIN-12`, … (every issue on the branch) |
 
-Project mode collects the issues to close from those in **`In Progress`** plus issue IDs found in the branch's commits. The `Closes <ID>` lines move each issue to **`Done`** via the GitHub integration on merge. Stages, commits, pushes, waits for CI, merges with squash, deletes the branch, returns to main. Project mode runs `linear project complete` when no open issues remain. If push fails due to divergence, rebases and lists conflicts — never force-pushes without explicit instruction.
+- Stages, commits, pushes, waits for CI, squash-merges, deletes the branch, returns to main.
+- Project mode collects issues to close from `In Progress` + IDs in the branch's commits; `Closes <ID>` moves each to `Done` on merge, then runs `linear project complete` when none remain open.
+- Push diverged → rebases and lists conflicts; never force-pushes without explicit instruction.
+- Non-code work (docs, decks, research): closes the issue(s) directly, optionally attaching links.
 
-For non-code work (documents, decks, research): closes issue(s) in Linear directly, optionally attaching links.
-
-### `/grind` — Autonomous one-cycle: pick → implement → ship
+### `/grind` — Autonomous one-cycle
 
 ```
-/grind project             # one cycle: highest-priority issue in the project
+/grind project             # one cycle: highest-priority ready issue in the project
 /grind issue               # one cycle: highest-priority ready issue
 /loop /grind project       # drain the whole project, one issue per cycle
-/loop /grind issue         # repeat, one branch per issue
 ```
 
-`/grind` is `/next` + implement + `/done` fused into a single command with **no interactive questions** — built so it can run under `/loop` unattended. It resolves scope from the argument, the current branch, or the default project (never prompts), picks the single highest-priority issue from the ready queue, branches from `main`, implements the minimal change, then pushes, opens the PR, waits for CI, and merges.
+`/grind` fuses `/next` + implement + `/done` into a single command with **no prompts** — built to run under `/loop` unattended. It resolves scope from the argument, branch, or default project, picks the top ready issue, branches from `main`, implements the minimal change, pushes, opens a PR, waits for CI, and merges.
 
-Where a normal `/next`/`/done` would ask a human, `/grind` instead emits a clear **STOP LOOP** signal so the loop ends cleanly rather than hanging:
+Where `/next`/`/done` would ask a human, `/grind` emits a **STOP LOOP** signal so the loop ends cleanly instead of hanging:
 
 | Condition | Behavior |
 |-----------|----------|
 | No ready work left | Stop loop (clean finish) |
-| Issue is non-code or ambiguous | Move it to Backlog (+`needs-human`), continue loop |
+| Issue is non-code or ambiguous | Move to Backlog (+`needs-human`), continue loop |
 | Needs a product decision | Stop loop, issue left In Progress |
 | Tests/build or CI fail | Stop loop — fix and re-run |
 | Rebase conflict | Stop loop, never force-pushes |
 
-Unlike interactive `/done project` (which batches a whole branch into one PR), `/grind` ships **one PR per issue every cycle** in both scopes — so each issue gets its own CI gate and failures isolate to a single issue. Project mode names the branch per day (`<slug>-YYYY-MM-DD`); since each cycle ships and merges its own PR, that branch is recreated fresh from `main` each cycle rather than reused. Issue mode is one branch per issue. Loop timing is self-paced — work duration varies, so there is nothing to poll on a clock. Use plain `/next`/`/done` when you want to stay in the loop yourself; use `/grind` when you want Claude to drive the whole cycle.
+- Ships **one PR per issue every cycle** in both scopes (own CI gate, isolated failures) — unlike `/done project`, which batches a branch into one PR.
+- Project branch `<slug>-YYYY-MM-DD` is recreated fresh from `main` each cycle, not reused.
+- Loop timing is self-paced. Use `/grind` to let Claude drive; use plain `/next`/`/done` to stay in the loop yourself.
 
-### `/autopilot` — Allowlisted autonomous cycle (for an unsupervised instance)
+### `/autopilot` — Allowlisted autonomous cycle
 
 ```
 /autopilot project          # one cycle, allowlisted issues in the project only
@@ -372,19 +339,14 @@ Unlike interactive `/done project` (which batches a whole branch into one PR), `
 /loop /autopilot project    # drain the allowlisted queue unattended
 ```
 
-`/autopilot` is `/grind` with one hard rule: **it only ever works issues labelled `auto-claude`.** Every queue lookup filters on that label, and before any branch/commit/transition it re-confirms the picked issue actually carries it — if not, it stops the loop and touches nothing. This is the command to point an **unattended Claude Code instance** at: a human adds `auto-claude` to an issue to opt it in, and the bot is structurally unable to act on anything else. Configure the automated instance to run `/autopilot` only — never `/grind` or `/next`, which would let it reach the whole backlog. All other behavior (scope resolution, per-issue PRs, STOP-LOOP conditions, non-code skip) is identical to `/grind`.
+`/grind` with one hard rule: **it only works issues labelled `auto-claude`.** Every queue lookup filters on the label, and before any branch/commit/transition it re-confirms the picked issue carries it — if not, it stops and touches nothing.
 
-Create the `auto-claude` label in your tracker first (`linear issue create … --label auto-claude`, or add it in the Linear/Jira UI). An empty allowlisted queue is a clean stop, not an error.
+- Point an **unattended instance at `/autopilot` only** — never `/grind`/`/next`, which would reach the whole backlog.
+- A human opts an issue in by adding the `auto-claude` label; the bot is structurally unable to act on anything else.
+- Create the `auto-claude` label first. Empty queue = clean stop, not an error.
+- Everything else (scope, per-issue PRs, STOP-LOOP conditions, non-code skip) matches `/grind`.
 
-### `/standup` — Daily standup summary
-
-```
-/standup
-```
-
-Yesterday / Today (in progress) / Blocked, plus recent commits and merged PRs. On Monday, the lookback extends to 3 days to cover the weekend.
-
-### `/pr` — Open a pull request for current work
+### `/pr` — Open a pull request
 
 ```
 /pr               # PR for the current branch
@@ -392,100 +354,24 @@ Yesterday / Today (in progress) / Blocked, plus recent commits and merged PRs. O
 /pr "my title"    # Override the generated title
 ```
 
-Stages, commits, pushes, creates a PR with `Closes <ID>`. Use this when you want a teammate to review before merging.
+Stages, commits, pushes, creates a PR with `Closes <ID>`. Use when you want a teammate to review before merging.
 
-### `/estimate` — Bulk-estimate unestimated issues
-
-```
-/estimate                    # Work through all unestimated issues
-/estimate FIN-12             # Estimate a specific issue
-/estimate --project "P1"     # Scope to a project
-```
-
-For each issue: shows context, reads referenced code if needed, suggests a t-shirt size with a rationale. Flags L/XL issues at the end and suggests `/split`.
-
-### `/scope` — Audit a project for gaps
+### `/standup` — Daily standup summary
 
 ```
-/scope                  # Audit the current default project
-/scope "Phase 1"        # Audit a specific project
+/standup
 ```
 
-Looks for unclear issues, unestimated issues, orphaned issues, scope gaps, oversized issues, and stale in-progress. Never creates or edits anything without confirmation.
+Yesterday / Today (in progress) / Blocked, plus recent commits and merged PRs. Monday lookback extends to 3 days.
 
-### `/split` — Break a large issue into sub-issues
-
-```
-/split FIN-12     # Split a specific issue
-/split            # Split the current issue (detected from branch)
-```
-
-Proposes 3–5 sub-issues with estimates and dependency ordering, creates them with `--parent` and `--blocked-by` set correctly, then offers `/next project` or `/next issue` for the first one.
-
-### `/issues` — Browse and filter issues by project
-
-```
-/issues                  # Browse active projects
-/issues "Phase 1"        # Jump directly to a named project
-```
-
-Lists active projects, then issues with ID, priority, status, title, assignee, estimate. Filters by status and assignee. Typing an issue ID shows full details and offers `/next issue <ID>` or `/next project`.
-
-### `/triage` — Groom the backlog interactively
-
-```
-/triage              # All issues missing priority, labels, or estimate
-/triage --priority   # Only issues with no priority set
-/triage --unlabeled  # Only issues with no labels
-```
-
-Presents each untriaged issue with suggested priority, labels, estimate, and project. Accept with Enter, edit individual fields, skip, or quit.
-
-### `/bugs` — Scan the codebase for bugs
-
-```
-/bugs              # Full codebase scan
-/bugs <path>       # Scan a specific directory or file
-```
-
-Reads every source file. Scans seven categories: security, error handling, logic errors, null/undefined access, type safety, resource management, concurrency. Creates one issue per bug in priority order (Urgent → Low), each with file location, impact, and suggested fix, tagged `bug`.
-
-### `/debt` — Scan the codebase for tech debt
-
-```
-/debt              # Full codebase scan
-/debt <path>       # Scan a specific path
-```
-
-Looks for missing tests, overly complex functions, dead code, TODO/FIXME, hardcoded config, duplicated logic, missing type safety, outdated patterns. Creates one issue per finding tagged `tech-debt`. The non-bug counterpart to `/bugs`.
-
-### `/deps` — Audit dependencies
-
-```
-/deps              # Full audit (security + outdated)
-/deps --security   # Security vulnerabilities only
-/deps --outdated   # Outdated packages only
-```
-
-Detects all package managers (npm, yarn, pnpm, pip, cargo, go modules, bundler), maps CVE severity to tracker priority, creates one issue per finding with the exact upgrade command.
-
-### `/review` — Review open pull requests
-
-```
-/review           # List open PRs and pick one
-/review 42        # Review PR #42 directly
-```
-
-Shows PR description, CI status, full diff. Summarizes changes and issues spotted. Offers approve / request changes / comment. Skips the approve option when the PR is yours.
-
-### `/sync` — Sync tracker state with GitHub
+### `/sync` — Reconcile tracker with GitHub
 
 ```
 /sync             # Report drift (read-only)
 /sync fix         # Report drift and apply fixes
 ```
 
-Detects merged PRs with open issues, stale in-progress issues with no branch, closed PRs. Useful after time off or sprint boundaries.
+Detects merged PRs with open issues, stale in-progress issues with no branch, and closed PRs. Useful after time off or sprint boundaries.
 
 ### `/whatchanged` — Management progress report
 
@@ -493,27 +379,138 @@ Detects merged PRs with open issues, stale in-progress issues with no branch, cl
 /whatchanged
 ```
 
-Reads a checkpoint at `.claude/whatchanged`, pulls issues that shipped/started/are in flight since then, generates a plain-language report (Delivered / Bug Fixes / In Progress / Coming Up), then updates the checkpoint. First run records the baseline; no report is produced.
+Reads a checkpoint at `.claude/whatchanged`, pulls issues shipped / started / in flight since then, generates a plain-language report (Delivered / Bug Fixes / In Progress / Coming Up), and updates the checkpoint. First run records the baseline only.
 
-### `/release` — Generate changelog and create a GitHub release
+### `/think` — Reason through a problem before planning
 
 ```
-/release            # Auto-detect version bump from change types
-/release patch      # Force patch bump
-/release minor      # Force minor bump
-/release major      # Force major bump
+/think                     # Open-ended exploration
+/think "Add X feature"     # Focused reasoning
 ```
 
-Finds the last git tag, gathers merged PRs and commits since, categorizes (Breaking / Features / Fixes / Performance / Docs / Chores), determines semver, creates the tag, runs `gh release create`. Optionally prepends to CHANGELOG.md.
+A structured conversation to figure out what to build and why — no tracker reads or writes. Asks grounding questions, explores the space (why now, simplest version, risks, alternatives, out-of-scope), then synthesizes a brief for `/plan`.
 
-### `/diagnose` — Root-cause a bug before touching any code
+### `/vision` — Strategic future planning
+
+```
+/vision                    # Open-ended future exploration
+/vision "1 year"           # Near-term horizon
+/vision "scale"            # A strategic theme
+/vision "compete with X"   # Competitive positioning
+```
+
+Reads current state (open projects, `product.md`, README, recent git log), then works through forces of change, capability gaps, strategic bets, and assumption stress-tests. Produces a vision document with a hand-off to `/plan`.
+
+### `/plan` — Plan work and create issues
+
+```
+/plan                      # Open-ended planning session
+/plan "Add retry logic"    # Focused planning
+```
+
+Reads tracker state, drafts issues with titles, descriptions, and acceptance criteria, creates them, then suggests `/next`. Issue mode stays one PR per issue; project mode can ship multiple in one PR. L/XL issues get split into sub-issues.
+
+### `/scope` — Audit a project for gaps
+
+```
+/scope                  # Audit the default project
+/scope "Phase 1"        # Audit a specific project
+```
+
+Finds unclear, unestimated, orphaned, oversized, and stale-in-progress issues, plus scope gaps. Never edits anything without confirmation.
+
+### `/split` — Break a large issue into sub-issues
+
+```
+/split FIN-12     # Split a specific issue
+/split            # Split the current issue (from branch)
+```
+
+Proposes 3–5 sub-issues with estimates and dependency ordering, creates them with `--parent` and `--blocked-by`, then offers `/next` for the first.
+
+### `/estimate` — Bulk-estimate issues
+
+```
+/estimate                    # Work through all unestimated issues
+/estimate FIN-12             # Estimate a specific issue
+/estimate --project "P1"     # Scope to a project
+```
+
+Per issue: shows context, reads referenced code if needed, suggests a t-shirt size with rationale. Flags L/XL at the end and suggests `/split`.
+
+### `/triage` — Groom the backlog
+
+```
+/triage              # Issues missing priority, labels, or estimate
+/triage --priority   # Only issues with no priority
+/triage --unlabeled  # Only issues with no labels
+```
+
+Presents each untriaged issue with suggested priority, labels, estimate, and project. Accept, edit a field, skip, or quit.
+
+### `/issues` — Browse and filter issues
+
+```
+/issues                  # Browse active projects
+/issues "Phase 1"        # Jump to a named project
+```
+
+Lists active projects, then issues with ID, priority, status, title, assignee, estimate. Filter by status/assignee; type an ID for full detail and a `/next` hand-off.
+
+### `/bugs` — Scan the codebase for bugs
+
+```
+/bugs              # Full codebase scan
+/bugs <path>       # Scan a specific path
+```
+
+Reads every source file across seven categories (security, error handling, logic, null access, type safety, resources, concurrency). Creates one issue per bug in priority order, each with location, impact, and suggested fix, tagged `bug`.
+
+### `/debt` — Scan for tech debt
+
+```
+/debt              # Full codebase scan
+/debt <path>       # Scan a specific path
+```
+
+Looks for missing tests, complex functions, dead code, TODO/FIXME, hardcoded config, duplication, weak typing, outdated patterns. One issue per finding, tagged `tech-debt`. The non-bug counterpart to `/bugs`.
+
+### `/deps` — Audit dependencies
+
+```
+/deps              # Full audit (security + outdated)
+/deps --security   # Vulnerabilities only
+/deps --outdated   # Outdated packages only
+```
+
+Detects all package managers (npm, yarn, pnpm, pip, cargo, go, bundler), maps CVE severity to priority, creates one issue per finding with the exact upgrade command.
+
+### `/review` — Review an open pull request
+
+```
+/review           # List open PRs and pick one
+/review 42        # Review PR #42 directly
+```
+
+Shows description, CI status, full diff; summarizes changes and issues spotted; offers approve / request changes / comment. Skips approve when the PR is yours.
+
+### `/release` — Changelog + GitHub release
+
+```
+/release            # Auto-detect version bump
+/release patch      # Force patch / minor / major
+```
+
+Finds the last tag, gathers merged PRs and commits since, categorizes (Breaking / Features / Fixes / Performance / Docs / Chores), determines semver, tags, and runs `gh release create`. Optionally prepends to CHANGELOG.md.
+
+### `/diagnose` — Root-cause before touching code
 
 ```
 /diagnose "login fails with 401 after token refresh"
 /diagnose
 ```
 
-Reads the full error, generates at least 3 mechanical hypotheses with evidence for/against, runs the fastest diagnostic that distinguishes the top two, fixes the confirmed root cause with the minimum change. No code is written until a hypothesis is confirmed.
+Reads the full error, generates ≥3 mechanical hypotheses with evidence, runs the fastest diagnostic to distinguish the top two, then fixes the confirmed root cause with the minimum change. No code until a hypothesis is confirmed.
 
 ### `/sit` — Stop, Inspect, Think
 
@@ -521,5 +518,4 @@ Reads the full error, generates at least 3 mechanical hypotheses with evidence f
 /sit
 ```
 
-Stops forward momentum, inspects what's been done, thinks through whether the approach is still right, decides Continue / Correct course / Ask / Stop and report. Trigger automatically after many tool calls without confirmation, when something unexpected happens, before a destructive action, or when scope has grown beyond what was asked.
-
+Pauses, inspects what's been done, judges whether the approach is still right, and decides: Continue / Correct course / Ask / Stop and report. Triggers automatically after many unconfirmed tool calls, on something unexpected, before a destructive action, or when scope has grown.
