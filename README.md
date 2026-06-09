@@ -29,6 +29,7 @@ Or run it unattended: `/loop /grind project` repeats the whole cycle until the p
 - `/next` — project mode (whole Linear project on one branch) or issue mode (one branch per issue)
 - `/done` — ship project (one PR, multiple issues) or ship a single issue; CI, merge, pull main
 - `/grind` — one autonomous cycle (pick → implement → ship), no prompts; wrap in `/loop` to drain a whole project unattended
+- `/autopilot` — `/grind` hard-gated to issues labelled `auto-claude`; for an unsupervised instance that may only touch explicitly allowlisted work
 - `/think`, `/vision` — reason through a problem or set strategic direction before planning
 - `/plan` — create Linear issues inline via MCP, with acceptance criteria
 - `/pr` — open a PR for review without merging
@@ -55,7 +56,7 @@ Same loop, different tracker. The Atlassian MCP server + the `jira` CLI for issu
 
 Or run it unattended: `/loop /grind project` repeats the whole cycle until the project is drained.
 
-The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/grind`, `/think`, `/vision`, `/plan`, `/pr`, `/issues`, `/triage`, `/estimate`, `/split`, `/scope`, `/bugs`, `/debt`, `/deps`, `/review`, `/sync`, `/whatchanged`, `/release`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
+The command set mirrors Claude + Linear — `/standup`, `/next`, `/done`, `/grind`, `/autopilot`, `/think`, `/vision`, `/plan`, `/pr`, `/issues`, `/triage`, `/estimate`, `/split`, `/scope`, `/bugs`, `/debt`, `/deps`, `/review`, `/sync`, `/whatchanged`, `/release`, `/diagnose`, `/sit` — but each command is rewritten to call `jira` instead of `linear`/MCP.
 
 **Key behavior differences vs Linear:**
 
@@ -362,6 +363,18 @@ Where a normal `/next`/`/done` would ask a human, `/grind` instead emits a clear
 | Rebase conflict | Stop loop, never force-pushes |
 
 Unlike interactive `/done project` (which batches a whole branch into one PR), `/grind` ships **one PR per issue every cycle** in both scopes — so each issue gets its own CI gate and failures isolate to a single issue. Project mode names the branch per day (`<slug>-YYYY-MM-DD`); since each cycle ships and merges its own PR, that branch is recreated fresh from `main` each cycle rather than reused. Issue mode is one branch per issue. Loop timing is self-paced — work duration varies, so there is nothing to poll on a clock. Use plain `/next`/`/done` when you want to stay in the loop yourself; use `/grind` when you want Claude to drive the whole cycle.
+
+### `/autopilot` — Allowlisted autonomous cycle (for an unsupervised instance)
+
+```
+/autopilot project          # one cycle, allowlisted issues in the project only
+/autopilot issue            # one cycle, one allowlisted issue per branch
+/loop /autopilot project    # drain the allowlisted queue unattended
+```
+
+`/autopilot` is `/grind` with one hard rule: **it only ever works issues labelled `auto-claude`.** Every queue lookup filters on that label, and before any branch/commit/transition it re-confirms the picked issue actually carries it — if not, it stops the loop and touches nothing. This is the command to point an **unattended Claude Code instance** at: a human adds `auto-claude` to an issue to opt it in, and the bot is structurally unable to act on anything else. Configure the automated instance to run `/autopilot` only — never `/grind` or `/next`, which would let it reach the whole backlog. All other behavior (scope resolution, per-issue PRs, STOP-LOOP conditions, non-code skip) is identical to `/grind`.
+
+Create the `auto-claude` label in your tracker first (`linear issue create … --label auto-claude`, or add it in the Linear/Jira UI). An empty allowlisted queue is a clean stop, not an error.
 
 ### `/standup` — Daily standup summary
 
