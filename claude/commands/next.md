@@ -32,7 +32,7 @@ Wait for the answer before continuing. Do not load issues or create branches unt
 
 ## Path: Project
 
-Pick the highest-priority unblocked issue in a Linear project and work on a shared project branch. Run `/next project` again to advance to the next issue on the same branch.
+Pick the highest-priority issue in **Ready for build** in a Linear project and work on a shared project branch. Run `/next project` again to advance to the next issue on the same branch.
 
 ### Resolve the project
 
@@ -43,9 +43,9 @@ Pick the highest-priority unblocked issue in a Linear project and work on a shar
 ### Load project and pick the next issue
 
 1. Run `linear project show "<project>"` for context, milestones, and progress.
-2. **If no issue override:** run `linear issues --project "<project>" --unblocked`.
+2. **If no issue override:** run `linear issues --project "<project>" --status "Ready for build"`.
 3. **Select the highest-priority issue** — do not present a pick list. Priority order: urgent → high → medium → low → none. Break ties by CLI sort order.
-4. If `--unblocked` returns nothing, run `linear issues --project "<project>" --open` and pick the highest-priority open issue. If still empty, see [No work available](#no-work-available).
+4. If **Ready for build** returns nothing, see [No work available](#no-work-available). Do **not** fall back to other statuses.
 5. Run `linear issue update <id> --status "In Review"` — you are now reading/learning the issue.
 6. Run `linear issue show <id>` — read description and acceptance criteria.
 
@@ -80,11 +80,11 @@ When ready to ship the project branch, tell the user to run `/done project`.
 
 ## Path: Issue
 
-Find an unblocked issue, branch per issue, implement one issue at a time. `/done issue` ships only that issue.
+Find a **Ready for build** issue, branch per issue, implement one issue at a time. `/done issue` ships only that issue.
 
 ### If no issue ID is provided
 
-1. Run `linear issues --unblocked`
+1. Run `linear issues --status "Ready for build"`
 2. Present interactive options:
    - Up to **3 issues** (CLI sorts yours first)
    - **Always** include "Product planning"
@@ -165,7 +165,7 @@ If the user chooses "Product planning", ask what to focus on (backlog, features,
 3. No open issues → offer `/plan` or `linear project complete "<project>"`
 4. Linear not configured → say to run `linear login`
 
-## No unblocked issues (issue mode)
+## No issues in Ready for build (issue mode)
 
 1. Run `linear issues --open`
 2. All blocked → show blockers; offer `/plan`

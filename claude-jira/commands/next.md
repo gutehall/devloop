@@ -46,7 +46,7 @@ Pick the highest-priority ready issue in an epic on a shared project branch. Run
 
 1. `jira issue view <epic-key>`
 2. `jira issue list --epics <epic-key> -s"To Do" --plain`
-3. If empty: `jira issue list --epics <epic-key> --resolution Unresolved --plain`
+3. If empty, see [No work available](#no-work-available). Do **not** fall back to other statuses/resolutions.
 4. **Highest priority** — no pick list. Order: Highest → High → Medium → Low → Lowest.
 
 Announce:

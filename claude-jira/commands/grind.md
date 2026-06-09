@@ -36,7 +36,7 @@ If none resolve → **STOP LOOP**, print: `grind: scope unresolved — run /grin
 jira issue view <epic-key>
 jira issue list --epics <epic-key> -s"To Do" --plain
 ```
-Pick the single **highest-priority** issue (Highest → High → Medium → Low → Lowest; ties by CLI order). No pick list. If empty, try `--resolution Unresolved --plain` once.
+Pick the single **highest-priority** issue in **To Do** (Highest → High → Medium → Low → Lowest; ties by CLI order). No pick list. Do **not** fall back to other statuses/resolutions — if empty, stop.
 
 **Issue mode:**
 ```bash
@@ -44,8 +44,8 @@ jira issue list -s"To Do" -a"$(jira me)" --plain
 ```
 Pick the highest-priority To Do issue assigned to you.
 
-**If nothing available** → **STOP LOOP**, print:
-`grind: no available work in <scope>. Stopping loop.`
+**If nothing in To Do** → **STOP LOOP**, print:
+`grind: no issues in "To Do" — <scope>. Stopping loop.`
 (Do not pick "Product planning" — that needs a human.)
 
 ### 2. Read and classify
@@ -127,7 +127,7 @@ jira issue move <key> "Done"      # if integration did not auto-transition on me
 git checkout <base> && git pull
 ```
 
-**Project mode:** do **not** delete the epic branch between cycles — `/loop` reuses it for the day. Re-checkout it next cycle.
+Each cycle ships its own PR and merges with `--delete-branch`, so the branch is gone after merge. **Project mode:** the next cycle re-creates `<epic-slug>-YYYY-MM-DD` fresh from the updated `main` (step 3). Do **not** try to reuse or re-push the merged branch — its commits are already squashed onto `main`, so reuse would diverge.
 
 ---
 
@@ -146,7 +146,7 @@ grind ✓ PROJ-12 merged (PR #214). Next cycle.
 
 | Condition | Action |
 |-----------|--------|
-| No available work | STOP LOOP (clean finish) |
+| No issues in To Do | STOP LOOP (clean finish) |
 | Non-code / ambiguous issue | SKIP, continue loop |
 | Needs product decision | STOP LOOP, issue left In Progress |
 | Tests/build fail (unfixable) | STOP LOOP |

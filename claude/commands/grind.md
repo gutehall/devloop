@@ -34,18 +34,18 @@ If none resolve → **STOP LOOP**, print: `grind: scope unresolved — run /grin
 **Project mode:**
 ```bash
 linear project show "<project>"
-linear issues --project "<project>" --unblocked
+linear issues --project "<project>" --status "Ready for build"
 ```
-Pick the single **highest-priority** unblocked issue (urgent → high → medium → low → none; ties by CLI order). No pick list.
+Pick the single **highest-priority** issue in **Ready for build** (urgent → high → medium → low → none; ties by CLI order). No pick list.
 
 **Issue mode:**
 ```bash
-linear issues --unblocked
+linear issues --status "Ready for build"
 ```
-Pick the highest-priority unblocked issue assigned to you (CLI sorts yours first).
+Pick the highest-priority issue in **Ready for build** assigned to you (CLI sorts yours first).
 
-**If nothing unblocked** → **STOP LOOP**, print:
-`grind: no unblocked work — N blocked, M open. Stopping loop.`
+**If nothing in Ready for build** → **STOP LOOP**, print:
+`grind: no issues in "Ready for build" — N blocked, M open. Stopping loop.`
 (Do not fall back to blocked issues. Do not pick "Product planning" — that needs a human.)
 
 ### 2. Read and classify
@@ -124,7 +124,7 @@ gh pr checks --watch
 git checkout <base> && git pull
 ```
 
-**Project mode:** do **not** delete the project branch between cycles — `/loop` reuses it for the day. Re-checkout it next cycle.
+Each cycle ships its own PR and merges with `--delete-branch`, so the branch is gone after merge. **Project mode:** the next cycle re-creates `<project-slug>-YYYY-MM-DD` fresh from the updated `main` (step 3). Do **not** try to reuse or re-push the merged branch — its commits are already squashed onto `main`, so reuse would diverge.
 
 ---
 
@@ -143,7 +143,7 @@ grind ✓ ISSUE-12 merged (PR #214). Next cycle.
 
 | Condition | Action |
 |-----------|--------|
-| No unblocked work | STOP LOOP (clean finish) |
+| No issues in Ready for build | STOP LOOP (clean finish) |
 | Non-code / ambiguous issue | SKIP, continue loop |
 | Needs product decision | STOP LOOP, issue left In Progress |
 | Tests/build fail (unfixable) | STOP LOOP |

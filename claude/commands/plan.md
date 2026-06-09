@@ -37,7 +37,7 @@ Create Linear issues directly via MCP, without clipboard or intermediate steps.
      - `labelIds` — at least one label (e.g. feature, bug, improvement)
      - `teamId` and `projectId`
    - Print each created issue ID and title
-   - After all issues are created, sort them by implementation order using `mcp__claude_ai_Linear__update_issue` to set `sortOrder` so issues appear in the sequence they should be worked on
+   - After all issues are created, sort them by implementation order using `mcp__claude_ai_Linear__save_issue` (pass the existing issue `id` plus `sortOrder`) so issues appear in the sequence they should be worked on
 
 5. **Offer next steps:**
    - Suggest `/estimate` to size the newly created issues before picking one up
