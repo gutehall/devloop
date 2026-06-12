@@ -47,7 +47,7 @@ Under the hood: the tracker's hosted MCP server gives Claude structured read acc
 |---------|--------------|
 | **Core loop** | |
 | `/next` | Pick the next ready issue and start — project or issue scope |
-| `/done` | Ship: commit, push, PR, CI, squash-merge, return to main |
+| `/done` | Ship: quality gate (diff review, tests, code review), PR, CI, confirmed squash-merge |
 | `/grind` | One autonomous cycle (pick → implement → ship), no prompts; wrap in `/loop` |
 | `/autopilot` | `/grind` restricted to issues labelled `auto-claude` — for an unsupervised instance |
 | `/pr` | Open a PR for review without merging |
@@ -158,7 +158,11 @@ The commands filter and transition issues by **exact, case-sensitive status name
 
 `/grind` also tags parked issues with a **`needs-human`** label (and `/autopilot` requires an **`auto-claude`** label) — create these, or change the strings in the command files. Verify with `linear issues --status "Ready for build"` — it should return without error.
 
-### 6. Windows
+### 6. Branch protection (recommended)
+
+The commands run quality gates before every push (diff review, local tests, code-review pass), but those gates are prompt-level. Protect `main` so they're enforced server-side too — required CI checks plus one approving review, and enable auto-merge so `/grind` and `/autopilot` can arm PRs instead of merging directly. The exact `gh` commands are in the **github-cli** skill's "Branch protection" section.
+
+### 7. Windows
 
 Same tools work in PowerShell — use `Copy-Item -Recurse` instead of `cp -r`, and `winget install --id GitHub.cli` (or `scoop install gh`). Everything else is identical.
 
@@ -224,6 +228,10 @@ The commands filter and transition issues by **exact status name**. Your Jira wo
 | `Done` | merge | Set after merge (GitHub app or `jira issue move`). |
 
 `/grind` tags parked issues `needs-human` (and `/autopilot` requires `auto-claude`). Jira status names are workflow-specific — confirm yours with `jira issue list -s"To Do"` and edit the command files if they differ.
+
+### 7. Branch protection (recommended)
+
+The commands run quality gates before every push (diff review, local tests, code-review pass), but those gates are prompt-level. Protect `main` so they're enforced server-side too — required CI checks plus one approving review, and enable auto-merge so `/grind` and `/autopilot` can arm PRs instead of merging directly. The exact `gh` commands are in the **github-cli** skill's "Branch protection" section.
 
 ---
 
@@ -302,7 +310,9 @@ Match the scope you started `/next` with.
 | **Issue** | One PR, one issue | `Closes FIN-12` |
 | **Project** | One PR for the branch | `Closes FIN-10`, `Closes FIN-12`, … (every issue on the branch) |
 
-- Stages, commits, pushes, waits for CI, squash-merges, deletes the branch, returns to main.
+- Runs a quality gate before pushing — full diff review (no blind staging), local test/build run, and a code-review-skill pass; Critical/High findings are fixed before anything leaves the machine.
+- Pushes, waits for CI, then **asks before merging** (squash + delete branch). No CI checks → merges only with explicit confirmation. Repos with required reviews → arms auto-merge instead.
+- The PR's test plan contains the commands actually run and their results — not an empty checklist.
 - Project mode collects issues to close from `In Progress` + IDs in the branch's commits; `Closes <ID>` moves each to `Done` on merge, then runs `linear project complete` when none remain open.
 - Push diverged → rebases and lists conflicts; never force-pushes without explicit instruction.
 - Non-code work (docs, decks, research): closes the issue(s) directly, optionally attaching links.
@@ -315,7 +325,7 @@ Match the scope you started `/next` with.
 /loop /grind project       # drain the whole project, one issue per cycle
 ```
 
-`/grind` fuses `/next` + implement + `/done` into a single command with **no prompts** — built to run under `/loop` unattended. It resolves scope from the argument, branch, or default project, picks the top ready issue, branches from `main`, implements the minimal change, pushes, opens a PR, waits for CI, and merges.
+`/grind` fuses `/next` + implement + `/done` into a single command with **no prompts** — built to run under `/loop` unattended. It resolves scope from the argument, branch, or default project, picks the top ready issue, branches from `main`, implements the minimal change, runs the pre-ship gate (diff review, local tests, code-review pass), pushes, opens a PR, waits for CI, and **arms auto-merge** — GitHub completes the merge once branch protection is satisfied. It never merges directly with absent CI.
 
 Where `/next`/`/done` would ask a human, `/grind` emits a **STOP LOOP** signal so the loop ends cleanly instead of hanging:
 
@@ -325,6 +335,9 @@ Where `/next`/`/done` would ask a human, `/grind` emits a **STOP LOOP** signal s
 | Issue is non-code or ambiguous | Move to Backlog (+`needs-human`), continue loop |
 | Needs a product decision | Stop loop, issue left In Progress |
 | Tests/build or CI fail | Stop loop — fix and re-run |
+| Unfixable Critical/High self-review finding | Stop loop, issue left In Progress |
+| Repo has no CI checks | Stop loop, PR left open for manual review |
+| PR awaiting required review | Stop loop (clean — auto-merge armed) |
 | Rebase conflict | Stop loop, never force-pushes |
 
 - Ships **one PR per issue every cycle** in both scopes (own CI gate, isolated failures) — unlike `/done project`, which batches a branch into one PR.
@@ -344,7 +357,8 @@ Where `/next`/`/done` would ask a human, `/grind` emits a **STOP LOOP** signal s
 - Point an **unattended instance at `/autopilot` only** — never `/grind`/`/next`, which would reach the whole backlog.
 - A human opts an issue in by adding the `auto-claude` label; the bot is structurally unable to act on anything else.
 - Create the `auto-claude` label first. Empty queue = clean stop, not an error.
-- Everything else (scope, per-issue PRs, STOP-LOOP conditions, non-code skip) matches `/grind`.
+- **Never runs a direct merge.** It arms auto-merge after CI passes and lets GitHub (branch protection) or a human complete it; if auto-merge isn't available, the PR stays open and the loop stops.
+- Everything else (scope, per-issue PRs, pre-ship gate, STOP-LOOP conditions, non-code skip) matches `/grind`.
 
 ### `/pr` — Open a pull request
 
@@ -354,7 +368,7 @@ Where `/next`/`/done` would ask a human, `/grind` emits a **STOP LOOP** signal s
 /pr "my title"    # Override the generated title
 ```
 
-Stages, commits, pushes, creates a PR with `Closes <ID>`. Use when you want a teammate to review before merging.
+Reviews the full diff, runs local tests/build, runs a code-review pass, then commits, pushes, and creates a PR with `Closes <ID>` and a real test plan. Use when you want a teammate to review before merging. Test failures block the push unless you explicitly ask for a `--draft`.
 
 ### `/standup` — Daily standup summary
 

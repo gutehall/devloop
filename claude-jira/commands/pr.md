@@ -23,26 +23,34 @@ For completed work, prefer `/done` — it handles commit, push, PR, and offers `
    git diff --stat <base>..HEAD
    ```
 
-3. **Stage and commit** any uncommitted changes (ask what the commit message should be)
+3. **Review the diff, then commit** — read `git status` and the **full** `git diff` before staging. Stage only changes that belong to this issue; leave out debug prints, stray files, and unrelated edits (list anything excluded). Never blind-stage with `git add -A`. Then commit (ask what the commit message should be).
 
-4. **Push:**
+4. **Verify locally** — detect and run the project's test and build commands; record the exact commands and results for the PR body.
+   - Failures → **stop and report; do not push.** Only exception: the user explicitly wants a WIP PR — push with `--draft` and state the failures in the body.
+   - No test/build tooling → say so; state it in the PR body too.
+
+5. **Self-review** — run the **code-review** skill (Phases 1–2: Understand → Audit) on `git diff <base>..HEAD`. Fix Critical/High findings before pushing; list unresolved Medium/Low under "Known issues" in the PR body.
+
+6. **Push:**
    ```bash
    git push -u origin HEAD
    ```
 
-5. **Build PR title:** `"PROJ-12: Issue summary"` — use custom title if provided
+7. **Build PR title:** `"PROJ-12: Issue summary"` — use custom title if provided
 
-6. **Build PR body:**
+8. **Build PR body:**
    - Brief bullet summary of what changed
+   - `## Test plan` with the real commands and results from step 4 — never an unchecked checkbox
+   - `## Known issues` for unresolved Medium/Low findings from step 5, if any
    - `Closes PROJ-12` at the end (triggers GitHub-Jira integration if configured)
 
-7. **Create PR:**
+9. **Create PR:**
    ```bash
    gh pr create --title "..." --body "..."
    # With --draft flag if requested
    ```
 
-8. **Print the PR URL**
+10. **Print the PR URL**
 
 ## If push fails due to diverged history
 

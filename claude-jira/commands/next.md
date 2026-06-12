@@ -21,8 +21,8 @@ In Jira, **project mode** uses an epic as the batch unit (Linear's equivalent of
 Unless the user already chose via `project` or `issue` in the command:
 
 > **Work at project level or on a single issue?**
-> - **Project** — one branch for the epic; `/next` picks the highest-priority child issue; `/done` ships everything in one PR
-> - **Issue** — one branch per issue; `/done` ships that issue only
+> - **Issue** (recommended) — one branch per issue; `/done` ships that issue only. Smaller PRs, individually CI-gated, easier to review.
+> - **Project** — one branch for the epic; `/next` picks the highest-priority child issue; `/done` ships everything in one PR. Use only when the issues are inseparable.
 
 Wait for the answer before continuing. Do not load issues or create branches until scope is confirmed.
 

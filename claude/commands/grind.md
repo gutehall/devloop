@@ -94,7 +94,13 @@ Implement the **minimal** solution against the acceptance criteria. Rules:
 - If acceptance criteria cannot be met without a product decision → **STOP LOOP**, leave issue In Progress, print `grind: <id> needs a decision — <what>. Stopping loop.`
 - Run the project's tests/build if present. Failing tests you cannot fix → **STOP LOOP**.
 
-### 5. Ship (follow `/done`, non-interactive)
+### 5. Pre-ship gate (mandatory, before any push)
+
+1. **Diff review** — read `git status` and the **full** `git diff`. Stage only changes that belong to <id>; drop debug prints, stray files, and unrelated edits. Never blind-stage with `git add -A`.
+2. **Local verification** — detect and run the project's test and build commands (re-run after the diff review even if step 4 already ran them). Record the exact commands and results — they go into the PR body. Unfixable failure → **STOP LOOP**.
+3. **Self-review** — run the **code-review** skill (Phases 1–2: Understand → Audit) on `git diff <base>..HEAD`. Critical/High findings → fix, then re-run verification. Unfixable Critical/High → **STOP LOOP**, leave issue In Progress, print `grind: <id> failed self-review — <finding>. Stopping loop.`
+
+### 6. Ship (follow `/done`, non-interactive)
 
 ```bash
 git remote show origin | grep 'HEAD branch'   # detect <base>, default main
@@ -111,21 +117,40 @@ git push -u origin HEAD
 
 Push rejected → follow the **github-cli** skill's "Push rejected (diverged history)" procedure; **conflicts → STOP LOOP**, list files, never force-push.
 
-Create the PR (`Closes <ID>` in body — required for Linear integration):
+Create the PR — `Closes <ID>` in body (required for Linear integration) and a test plan with the **real results** from the pre-ship gate:
 ```bash
-gh pr create --title "ISSUE-12: …" --body "…Closes ISSUE-12"
+gh pr create --title "ISSUE-12: …" --body "$(cat <<'EOF'
+## Summary
+
+- What changed and why
+
+## Test plan
+
+- `<test command>` — <result>
+- `<build command>` — <result>
+
+Closes ISSUE-12
+EOF
+)"
 ```
 Print PR URL.
 
-### 6. CI + merge
+### 7. CI + merge (never merge directly)
 
 ```bash
 gh pr checks --watch
 ```
-- Pass / no checks → `gh pr merge --squash --delete-branch`
 - **Fail → STOP LOOP**, print `grind: CI failed on <PR> — stopping. Fix and re-run.` Do not pick the next issue on a broken base.
+- **No checks configured → STOP LOOP.** Leave the PR open, print `grind: no CI on this repo — refusing to auto-merge <PR>. Review and merge manually.` An autonomous loop never merges unvalidated code; the local pre-ship gate is not a substitute for CI on `main`.
+- **Pass** → arm auto-merge so GitHub (branch protection) decides when it lands:
+  ```bash
+  gh pr merge --auto --squash --delete-branch
+  ```
+  - Merges immediately (no review required) → continue to step 8.
+  - Stays open awaiting approval → **STOP LOOP** (clean finish), print `grind: PR <#> armed to auto-merge, awaiting review. Stopping — re-run after approval.` Do not stack further cycles on an unmerged base.
+  - Repo does not allow auto-merge (`--auto` rejected) → checks passed and the pre-ship gate ran, so fall back to `gh pr merge --squash --delete-branch`; suggest enabling auto-merge + branch protection (see the github-cli skill).
 
-### 7. Return to base
+### 8. Return to base
 ```bash
 git checkout <base> && git pull
 ```
@@ -153,8 +178,11 @@ grind ✓ ISSUE-12 merged (PR #214). Next cycle.
 | Non-code / ambiguous issue | SKIP, continue loop |
 | Needs product decision | STOP LOOP, issue left In Progress |
 | Tests/build fail (unfixable) | STOP LOOP |
+| Critical/High self-review finding (unfixable) | STOP LOOP, issue left In Progress |
 | No commits produced | STOP LOOP |
 | Rebase conflict | STOP LOOP, no force-push |
 | CI fail | STOP LOOP |
+| No CI checks configured | STOP LOOP, PR left open for manual review |
+| PR awaiting required review | STOP LOOP (clean — auto-merge armed) |
 
-Never: prompt the user, pick blocked work, guess work type, force-push, or `linear issue close` before merge.
+Never: prompt the user, pick blocked work, guess work type, force-push, merge with failing or absent CI, or `linear issue close` before merge.

@@ -19,8 +19,8 @@ Works for any type of issue — code, documents, decks, reviews, planning, ops t
 Unless the user already chose via `project` or `issue` in the command:
 
 > **Ship at project level or for a single issue?**
-> - **Project** — one PR closing all issues worked on this project branch
-> - **Issue** — one PR closing the issue on this issue branch
+> - **Issue** (recommended) — one PR closing the issue on this issue branch. Smaller diff, its own CI run, far easier to review.
+> - **Project** — one PR closing all issues worked on this project branch. Use only when the issues are inseparable — a multi-issue squashed PR is the hardest artifact to review.
 
 Wait for the answer before pushing, creating a PR, or closing issues.
 
@@ -35,6 +35,39 @@ Wait for the answer before pushing, creating a PR, or closing issues.
 - Project branch (`<project-slug>-YYYY-MM-DD`) or issue branch (`TEAM-123-*`) with git repo → code work
 - No matching branch → non-code work
 - If ambiguous, ask
+
+---
+
+## Quality gate (both code paths — mandatory before any push)
+
+Run all three checks, in order, after the work summary and before pushing. Their results feed the PR body. **Do not push until all three pass.**
+
+### G1. Review the diff, then commit
+
+Read `git status` and the **full** `git diff` (plus `git diff <base>..HEAD` for already-committed work) before staging anything:
+
+- Stage only changes that belong to this issue/project
+- Leave out debug prints, commented-out code, stray files, and unrelated edits — list anything excluded
+- Never blind-stage with `git add -A` without reading what it picks up
+
+Then commit what survived. Prefer `ISSUE-12: …` per change; a project branch may use `<project-slug>: <summary>`.
+
+### G2. Verify locally
+
+Detect the project's test and build commands (`package.json` scripts, `Makefile`, `pyproject.toml`, CI workflow files) and run them.
+
+- Tests fail or build breaks → **stop. Do not push.** Fix it or report to the user.
+- No test/build tooling exists → say so explicitly; it must also be stated in the PR body.
+
+Record the exact commands and their results — they go into the PR body's test plan.
+
+### G3. Self-review the code
+
+Run the **code-review** skill (Phases 1–2: Understand → Audit) against the full diff (`git diff <base>..HEAD`):
+
+- **Critical/High** findings → fix now, re-run G2, then continue
+- **Medium** → fix now, or list under "Known issues" in the PR body — never silently drop
+- **Low** → note in the PR body or propose a follow-up issue
 
 ---
 
@@ -73,9 +106,9 @@ git diff --stat <base>..HEAD
 
 List every issue ID in this project push.
 
-### 4. Stage and commit
+### 4. Run the quality gate
 
-Commit uncommitted changes. Prefer `ISSUE-12: …` per change; else `<project-slug>: <summary>`.
+Complete **G1–G3** above. All three must pass before anything is pushed.
 
 ### 5. Push branch
 
@@ -87,7 +120,7 @@ git push -u origin HEAD
 
 Title: `<Project Name>: <short summary>`
 
-Body — one `Closes ISSUE-ID` per issue:
+Body — one `Closes ISSUE-ID` per issue, and a test plan filled with the **real commands and results from G2** (never an unchecked checkbox):
 
 ```bash
 gh pr create --title "Phase 1: Caching and auth improvements" --body "$(cat <<'EOF'
@@ -102,7 +135,12 @@ Closes ISSUE-12
 
 ## Test plan
 
-- [ ] Tested locally
+- `npm test` — 42 passed, 0 failed
+- `npm run build` — clean
+
+## Known issues
+
+- (Medium/Low findings from G3 not fixed in this PR, if any)
 EOF
 )"
 ```
@@ -115,14 +153,22 @@ Print the PR URL immediately.
 gh pr checks --watch
 ```
 
-- Pass → merge
+- Pass → continue to merge
 - Fail → stop; fix and run `/done project` again
-- No checks → merge immediately
+- **No checks configured** → there is no CI gate; the quality gate (G1–G3) was the only validation. Tell the user this repo has no CI, suggest branch protection (see the github-cli skill), and do **not** merge without their explicit confirmation.
 
-### 8. Merge
+### 8. Merge (confirm first)
+
+Show the PR URL, CI result, and quality-gate results, then ask: **"Merge now?"** Do not merge without a yes.
 
 ```bash
 gh pr merge --squash --delete-branch
+```
+
+If branch protection requires an approving review, arm auto-merge instead and finish — GitHub merges once a reviewer approves:
+
+```bash
+gh pr merge --auto --squash --delete-branch
 ```
 
 ### 9. Return to base
@@ -169,9 +215,9 @@ git log --oneline <base>..HEAD
 git diff --stat <base>..HEAD
 ```
 
-### 4. Stage and commit
+### 4. Run the quality gate
 
-Stage and commit any uncommitted changes.
+Complete **G1–G3** above. All three must pass before anything is pushed.
 
 ### 5. Push branch
 
@@ -181,6 +227,8 @@ git push -u origin HEAD
 
 ### 6. Create issue PR
 
+Test plan must contain the **real commands and results from G2** — never an unchecked checkbox:
+
 ```bash
 gh pr create --title "ISSUE-12: Issue title" --body "$(cat <<'EOF'
 ## Summary
@@ -189,7 +237,8 @@ gh pr create --title "ISSUE-12: Issue title" --body "$(cat <<'EOF'
 
 ## Test plan
 
-- [ ] Tested locally
+- `npm test` — 42 passed, 0 failed
+- `npm run build` — clean
 
 Closes ISSUE-12
 EOF
@@ -204,14 +253,22 @@ Print the PR URL immediately.
 gh pr checks --watch
 ```
 
-- Pass → merge
+- Pass → continue to merge
 - Fail → stop; fix and run `/done issue` again
-- No checks → merge immediately
+- **No checks configured** → there is no CI gate; the quality gate (G1–G3) was the only validation. Tell the user this repo has no CI, suggest branch protection (see the github-cli skill), and do **not** merge without their explicit confirmation.
 
-### 8. Merge
+### 8. Merge (confirm first)
+
+Show the PR URL, CI result, and quality-gate results, then ask: **"Merge now?"** Do not merge without a yes.
 
 ```bash
 gh pr merge --squash --delete-branch
+```
+
+If branch protection requires an approving review, arm auto-merge instead and finish — GitHub merges once a reviewer approves:
+
+```bash
+gh pr merge --auto --squash --delete-branch
 ```
 
 ### 9. Return to base
@@ -255,3 +312,4 @@ No git, no PR.
 - Scope question comes **before** git operations
 - Use `/done project` after `/next project` and `/done issue` after `/next issue`
 - When in doubt about work type, check the branch pattern first
+- The quality gate (G1–G3) is prompt-level discipline — make it unbypassable with branch protection on `main` (required checks + 1 approving review). See the github-cli skill's "Branch protection" section.

@@ -62,8 +62,8 @@ gh pr create \
 
 ## Test plan
 
-- [ ] Tested locally
-- [ ] Edge cases considered
+- `npm test` — 42 passed, 0 failed
+- `npm run build` — clean
 
 Closes PROJ-12
 EOF
@@ -74,6 +74,7 @@ EOF
 
 - **Title format:** `PROJ-KEY: Short description` — links the PR to the Jira issue in the development panel
 - **Body must end with `Closes PROJ-KEY`** — triggers Jira-GitHub integration to auto-transition the issue on merge (if configured)
+- **Test plan must contain the commands actually run and their actual results** — never unchecked checkboxes. If the repo has no test/build tooling, say so in the test plan.
 - Do not use `--fill` — it produces poor titles and bodies
 - Use `--draft` for WIP PRs not ready for review
 
@@ -111,14 +112,44 @@ gh pr review --request-changes -b "Please add tests for the edge case in auth.ts
 
 ### Merge after CI passes
 ```bash
-gh pr merge --squash  # Squash commits into one clean commit on main
+gh pr merge --squash --delete-branch          # interactive flows, after the user confirms
+gh pr merge --auto --squash --delete-branch   # arm auto-merge: GitHub merges once checks + required reviews pass (use in /grind and /autopilot)
 ```
+
+Never merge with failing checks. If the repo has no checks at all, treat that as a missing gate — flag it and set up branch protection (below) rather than merging unvalidated code.
 
 ### View a specific PR
 ```bash
 gh pr view 123
 gh pr diff 123
 ```
+
+## Branch protection (server-side enforcement)
+
+The workflow's quality gates (diff review, local tests, code-review skill) live in prompts — they are advisory. Branch protection on the default branch makes them unbypassable for every contributor, human or bot:
+
+```bash
+# Require CI checks + 1 approving review on main
+gh api -X PUT repos/{owner}/{repo}/branches/main/protection --input - <<'EOF'
+{
+  "required_status_checks": { "strict": true, "contexts": ["<your-ci-check-name>"] },
+  "required_pull_request_reviews": { "required_approving_review_count": 1 },
+  "enforce_admins": true,
+  "restrictions": null
+}
+EOF
+
+# Allow PRs to be armed for auto-merge (used by /grind and /autopilot)
+gh repo edit --enable-auto-merge
+```
+
+With protection in place:
+
+- A direct `gh pr merge` fails until required checks and reviews are satisfied
+- `gh pr merge --auto --squash --delete-branch` arms the merge; GitHub completes it once requirements are met
+- `enforce_admins: true` closes the "admins can bypass" hole
+
+Find the check name with `gh pr checks` on any open PR, or from `.github/workflows/*.yml` job names.
 
 ## Push rejected (diverged history)
 
