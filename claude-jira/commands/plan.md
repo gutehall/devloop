@@ -27,13 +27,14 @@ Create Jira issues directly, without clipboard or intermediate steps.
    - Identify gaps, priorities, or the focus area provided
    - Draft issues with clear summaries, descriptions, and acceptance criteria
 
-4. **Create issues via CLI** directly:
+4. **Create an epic and issues via CLI** directly:
+   - First create an epic to group the work if one doesn't exist: `jira epic create -n"<epic name>" -s"<summary>"` — leave it in **Backlog** status (do not transition it forward)
    ```bash
    jira issue create -tStory -s"<title>" -b"<description>" --priority Medium
    ```
    - Print each created issue ID and title
-   - Link to a parent epic if applicable: `jira issue create -tStory --parent PROJ-100 -s"..."`
-   - Add to active sprint if appropriate: `jira sprint add --board-id <id> PROJ-123`
+   - Link to the parent epic: `jira issue create -tStory --parent PROJ-100 -s"..."`
+   - New issues stay in **Backlog** — do **not** add them to the active sprint at planning time
 
 5. **Offer to start:**
    - Suggest `/next <ID>` for the highest-priority issue created
@@ -49,6 +50,7 @@ Create Jira issues directly, without clipboard or intermediate steps.
 ## Rules
 
 - Always read current Jira state before planning — don't create duplicates
+- Always group issues under an epic (check existing epics first) — new epics and issues start in **Backlog**, not the active sprint
 - Issues need: summary, description, acceptance criteria, type, priority
 - Keep issues small enough to implement in one PR (Story/Task)
 - Use Epic for large initiatives, Story for features, Bug for defects, Task for ops/chores

@@ -29,7 +29,7 @@ Create Linear issues directly via MCP, without clipboard or intermediate steps.
    - Draft issues with clear titles, descriptions, and acceptance criteria
 
 4. **Create a project and issues via MCP** directly:
-   - First create a project with `mcp__claude_ai_Linear__save_project` if one doesn't exist for this work
+   - First create a project with `mcp__claude_ai_Linear__save_project` if one doesn't exist for this work — set its status to **Backlog** (pass `state: "backlog"`)
    - Use `mcp__claude_ai_Linear__save_issue` for each issue — every issue **must** include:
      - `title` — clear, action-oriented
      - `description` — what, why, and acceptance criteria
@@ -54,7 +54,7 @@ Create Linear issues directly via MCP, without clipboard or intermediate steps.
 ## Rules
 
 - Always read current Linear state before planning — don't create duplicates
-- Always create a project to group the issues under (check existing projects first)
+- Always create a project to group the issues under (check existing projects first) — new projects start in **Backlog** status
 - Every issue **must** have: title, description, acceptance criteria, priority, and at least one label
 - Issues must be sorted by implementation order — the first issue to work on appears first in Linear
 - Keep issues small enough to implement in one PR
