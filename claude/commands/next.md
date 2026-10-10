@@ -120,22 +120,7 @@ Set the issue In Progress with `mcp__claude_ai_Linear__save_issue` (`id`, `state
 
 **Then the project:** if the picked project's live status is Backlog or Planned, move it with `mcp__claude_ai_Linear__save_project` (`id`, `state: "In Progress"`) and print `Project <name>: <old> → In Progress`. Any other status → leave it. Only after work on the issue actually begins. Never move a project back; completion stays manual.
 
-Then run **Path A: Code Work** steps 2, 4, 5 (prior-work check, explore, implement) — or **Path B** for non-code issues (no branch). Implementation below.
-
-### Who implements (sub-agents)
-
-The lead (this session) implements by default. When the issue touches more than about 3 files:
-
-- Spawn one `context` agent per disjoint place (cap 3; one more round only if a returned pack lists a place under **Missing**). One agent per place; none roams.
-- Then the lead may spawn **one** specialist — `backend`, `frontend`, or `docs` — for the bulk of the change. No parallel writers.
-- Pass every agent the absolute checkout path, the issue ID and AC, and the conventions you read (agents do not inherit your conversation). Pass specialists the context packs and the files they may change.
-- **Lead only, no specialist:** issues labelled `risk:high`, `security`, or `billing`, and anything touching auth, credentials, payments, or data migrations.
-- The lead reviews the specialist's diff, then commits, pushes (`git push -u origin HEAD`), and updates Linear. Specialists never do.
-- Agent output is a lead, not proof — read cited spans before relying on them.
-
-**Watchable panes (tmux):** give every spawned agent a `name` (`context-<place>`, `backend`, `frontend`, `docs`). With agent teams enabled (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) and the session inside tmux (`teammateMode` `tmux` or `auto`), each named agent opens in its own pane so the user can follow it. Otherwise the same calls run as normal subagents — never fail or ask over missing panes.
-
-**Close panes:** named agents stay open and idle after they reply. Stop each with `TaskStop` (`task_id` = its `name`) as soon as it is done: each `context` agent once its pack is read, the specialist once its diff is reviewed. Before telling the user to run `/done issue`, confirm none is left running. Stopping a name that is already gone is fine.
+Then run **Path A: Code Work** steps 2, 4, 5 (prior-work check, explore, implement, including **Who implements**) — or **Path B** for non-code issues (no branch).
 
 When ready to ship, tell the user to run `/done issue`.
 
@@ -200,9 +185,24 @@ If ambiguous, ask: "Is this code work or non-code work?"
 2. **Prior-work check** — run the **prior-work** skill: has this already been solved (merged PR, existing code, open branch, or duplicate issue)? Default the code search to **1–3 targeted greps/globs on the main thread** (symbols/filenames from the AC). Do **not** spawn a locator subagent for a typical issue — that setup cost is why `/next` got expensive. Spawn at most **one** cheap locator (`cavecrew-investigator` if that type exists, else Task/Explore on Haiku) only when the issue is clearly a feature / multi-file change. Never spawn 2–3 in parallel here. This search doubles as explore — do not re-search in step 4 unless there are gaps. Before presenting a "shipped" or "duplicate" finding, verify the cited PR/commit/code yourself. Then present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit) before branching. Do not skip this.
 3. Set up the branch per scope (project or issue rules above)
 4. Explore relevant code — reuse step 2. No extra locators unless step 2 left a gap on a multi-file issue.
-5. Move the issue to **In Progress**, then implement — minimal solution, follow existing patterns. **Now** apply project conventions: if this repo has a conventions skill, invoke it; else follow root/nearest `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` if present. Do not load those during pick / prior-work / branch.
+5. Move the issue to **In Progress**, then implement (see **Who implements** below) — minimal solution, follow existing patterns. **Now** apply project conventions: if this repo has a conventions skill, invoke it; else follow root/nearest `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` if present. Do not load those during pick / prior-work / branch.
 
 **Implementation rules:** read before coding; focused changes only; no unrelated refactors; check acceptance criteria; flag scope creep.
+
+#### Who implements (sub-agents)
+
+Applies to every scope (project, issue, initiative). The lead (this session) implements by default. When the issue touches more than about 3 files:
+
+- Spawn one `context` agent per disjoint place (cap 3; one more round only if a returned pack lists a place under **Missing**). One agent per place; none roams.
+- Then the lead may spawn **one** specialist — `backend`, `frontend`, or `docs` — for the bulk of the change. No parallel writers.
+- Pass every agent the absolute checkout path, the issue ID and AC, and the conventions you read (agents do not inherit your conversation). Pass specialists the context packs and the files they may change.
+- **Lead only, no specialist:** issues labelled `risk:high`, `security`, or `billing`, and anything touching auth, credentials, payments, or data migrations.
+- The lead reviews the specialist's diff, then commits, pushes (`git push -u origin HEAD`), and updates Linear. Specialists never do.
+- Agent output is a lead, not proof — read cited spans before relying on them.
+
+**Watchable panes (tmux):** give every spawned agent a `name` (`context-<place>`, `backend`, `frontend`, `docs`). With agent teams enabled (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) and the session inside tmux (`teammateMode` `tmux` or `auto`), each named agent opens in its own pane so the user can follow it. Otherwise the same calls run as normal subagents — never fail or ask over missing panes.
+
+**Close panes:** named agents stay open and idle after they reply. Stop each with `TaskStop` (`task_id` = its `name`) as soon as it is done: each `context` agent once its pack is read, the specialist once its diff is reviewed. Before telling the user to run `/done`, confirm none is left running. Stopping a name that is already gone is fine.
 
 ### Path B: Non-Code Work
 

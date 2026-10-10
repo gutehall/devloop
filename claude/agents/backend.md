@@ -1,6 +1,6 @@
 ---
 name: backend
-description: Backend writer for one issue in one checkout. Spawned by the lead in /next initiative after the context packs are back, when the change touches more than about 3 backend files. Not for issues labelled risk:high, security, or billing — the lead keeps those.
+description: Backend writer for one issue in one checkout. Spawned by the lead in /next (any scope) after the context packs are back, when the change touches more than about 3 backend files. Not for issues labelled risk:high, security, or billing — the lead keeps those.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 ---

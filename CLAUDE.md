@@ -18,7 +18,7 @@ Linear is the daily-driver variant. The Jira variant exists so teams on Jira can
 ```
 claude/
   commands/           # Slash command specs (.md prompt files loaded by Claude Code)
-  agents/             # Sub-agents for /next initiative (context, backend, frontend, docs)
+  agents/             # Sub-agents for /next, any scope (context, backend, frontend, docs)
   skills/             # Reusable skill modules referenced from commands
     linear-cli/       # Linear CLI reference and best practices
     github-cli/       # GitHub CLI reference (gh)
@@ -33,6 +33,7 @@ claude/
 
 claude-jira/
   commands/           # Same command set, adapted to use Jira CLI instead of Linear
+  agents/             # Same sub-agents as claude/agents (tracker-agnostic)
   skills/             # Same skill modules, adapted for Jira instead of Linear
     jira-cli/         # Jira CLI reference (instead of linear-cli)
     (rest mirrors claude/skills/)
@@ -103,13 +104,14 @@ No test suite. Validate by installing commands in a test project and running the
 ```bash
 # Linear variant (core + situational skills)
 cp claude/commands/* /path/to/project/.claude/commands/
-cp claude/agents/* /path/to/project/.claude/agents/   # optional: /next initiative sub-agents
+cp claude/agents/* /path/to/project/.claude/agents/   # optional: /next sub-agents
 for s in ship-gate linear-cli github-cli code-review prior-work product-planning diagnostic bugs debt deps release scope split sit; do
   cp -r "claude/skills/$s" /path/to/project/.claude/skills/
 done
 
 # Jira variant
 cp claude-jira/commands/* /path/to/project/.claude/commands/
+cp claude-jira/agents/* /path/to/project/.claude/agents/   # optional: /next sub-agents
 for s in ship-gate jira-cli github-cli code-review prior-work product-planning diagnostic bugs debt deps release scope split sit; do
   cp -r "claude-jira/skills/$s" /path/to/project/.claude/skills/
 done

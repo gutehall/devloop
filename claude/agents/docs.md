@@ -1,6 +1,6 @@
 ---
 name: docs
-description: Docs writer for one issue. Spawned by the lead in /next initiative after the context packs are back, when the change is documentation across more than about 3 files. Not for issues labelled risk:high, security, or billing — the lead keeps those.
+description: Docs writer for one issue. Spawned by the lead in /next (any scope) after the context packs are back, when the change is documentation across more than about 3 files. Not for issues labelled risk:high, security, or billing — the lead keeps those.
 tools: Read, Grep, Glob, Edit, Write
 model: inherit
 ---

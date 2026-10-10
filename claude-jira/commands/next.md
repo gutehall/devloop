@@ -140,9 +140,24 @@ If ambiguous, ask: "Is this code work or non-code work?"
 
 ### Path A: Code Work
 
-Read criteria (issue stays in **To Do** while reading), then run the **prior-work** skill — has this already been solved (merged PR, existing code, open branch, or duplicate issue)? Default the code search to **1–3 targeted greps/globs on the main thread**. Do **not** spawn a locator subagent for a typical issue. Spawn at most **one** cheap locator (`cavecrew-investigator` if that type exists, else Task/Explore on Haiku) only when the issue is clearly a feature / multi-file change. Never spawn 2–3 in parallel. Verify cited PR/commit/code yourself before close/skip. This search doubles as explore. If it finds a match, present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit) before branching. Then set up branch per scope, explore code (reuse prior-work results), move to **In Progress**, and implement minimally. **Now** apply project conventions: if this repo has a conventions skill, invoke it; else follow root/nearest `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` if present. Do not load those during pick / prior-work / branch.
+Read criteria (issue stays in **To Do** while reading), then run the **prior-work** skill — has this already been solved (merged PR, existing code, open branch, or duplicate issue)? Default the code search to **1–3 targeted greps/globs on the main thread**. Do **not** spawn a locator subagent for a typical issue. Spawn at most **one** cheap locator (`cavecrew-investigator` if that type exists, else Task/Explore on Haiku) only when the issue is clearly a feature / multi-file change. Never spawn 2–3 in parallel. Verify cited PR/commit/code yourself before close/skip. This search doubles as explore. If it finds a match, present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit) before branching. Then set up branch per scope, explore code (reuse prior-work results), move to **In Progress**, and implement minimally (see **Who implements** below). **Now** apply project conventions: if this repo has a conventions skill, invoke it; else follow root/nearest `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` if present. Do not load those during pick / prior-work / branch.
 
 **Implementation rules:** read before coding; focused changes only; no unrelated refactors; check acceptance criteria; flag scope creep.
+
+#### Who implements (sub-agents)
+
+Applies to every scope (project, issue). The lead (this session) implements by default. When the issue touches more than about 3 files:
+
+- Spawn one `context` agent per disjoint place (cap 3; one more round only if a returned pack lists a place under **Missing**). One agent per place; none roams.
+- Then the lead may spawn **one** specialist — `backend`, `frontend`, or `docs` — for the bulk of the change. No parallel writers.
+- Pass every agent the absolute checkout path, the issue ID and AC, and the conventions you read (agents do not inherit your conversation). Pass specialists the context packs and the files they may change.
+- **Lead only, no specialist:** issues labelled `risk:high`, `security`, or `billing`, and anything touching auth, credentials, payments, or data migrations.
+- The lead reviews the specialist's diff, then commits, pushes (`git push -u origin HEAD`), and updates Jira. Specialists never do.
+- Agent output is a lead, not proof — read cited spans before relying on them.
+
+**Watchable panes (tmux):** give every spawned agent a `name` (`context-<place>`, `backend`, `frontend`, `docs`). With agent teams enabled (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) and the session inside tmux (`teammateMode` `tmux` or `auto`), each named agent opens in its own pane so the user can follow it. Otherwise the same calls run as normal subagents — never fail or ask over missing panes.
+
+**Close panes:** named agents stay open and idle after they reply. Stop each with `TaskStop` (`task_id` = its `name`) as soon as it is done: each `context` agent once its pack is read, the specialist once its diff is reviewed. Before telling the user to run `/done`, confirm none is left running. Stopping a name that is already gone is fine.
 
 ### Path B: Non-Code Work
 

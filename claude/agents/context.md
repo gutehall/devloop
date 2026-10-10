@@ -1,6 +1,6 @@
 ---
 name: context
-description: Read-only context pack for one place in the repo. Spawned by the lead in /next initiative when an issue touches more than about 3 files, one agent per disjoint place, before any specialist writes.
+description: Read-only context pack for one place in the repo. Spawned by the lead in /next (any scope) when an issue touches more than about 3 files, one agent per disjoint place, before any specialist writes.
 tools: Read, Grep, Glob
 model: haiku
 ---

@@ -118,13 +118,15 @@ The command set and workflow are identical; only the tracker calls differ.
 
 # Installation
 
-## Initiative mode and agents (Linear)
+## Sub-agents and initiative mode
 
-`/next initiative "Name"` walks a Linear initiative's projects (In Progress first) and starts the highest-priority unblocked **Ready for build** issue, one branch per issue; ship it with `/done issue`. For issues touching more than ~3 files, the lead spawns read-only `context` agents, then at most one writer (`backend`, `frontend`, or `docs`). Install them with the commands:
+`/next initiative "Name"` walks a Linear initiative's projects (In Progress first) and starts the highest-priority unblocked **Ready for build** issue, one branch per issue; ship it with `/done issue` (Linear only).
+
+In every `/next` scope (project, issue, initiative — both variants), issues touching more than ~3 files get read-only `context` agents, then at most one writer (`backend`, `frontend`, or `docs`). Smaller issues stay on the lead. Install the agents:
 
 ```bash
 mkdir -p /path/to/your/project/.claude/agents
-cp devloop/claude/agents/* /path/to/your/project/.claude/agents/
+cp devloop/claude/agents/* /path/to/your/project/.claude/agents/   # or devloop/claude-jira/agents/*
 ```
 
 **See each agent in its own tmux pane** (optional). One-time, in `~/.claude/settings.json`, then restart Claude Code:
@@ -135,7 +137,7 @@ cp devloop/claude/agents/* /path/to/your/project/.claude/agents/
 
 ```bash
 tmux new -s devloop    # reattach later with: tmux attach -t devloop
-claude                 # run inside tmux, then /next initiative "Name"
+claude                 # run inside tmux, then /next
 ```
 
 `teammateMode` `"auto"` uses panes inside tmux or iTerm2 (needs the `it2` CLI and its Python API enabled) and runs agents in-process otherwise; `"tmux"` / `"iterm2"` force a backend. VS Code's terminal, Windows Terminal, and Ghostty are unsupported for split panes. Limits: one team per session, teammates start without the lead's history, token cost grows per agent.
