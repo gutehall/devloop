@@ -63,7 +63,7 @@ Commands and skills are written so Claude pays for methodology only when it is i
 | Command | What it does |
 |---------|--------------|
 | **Core loop** | |
-| `/next` | Pick the next ready issue and start — project or issue scope |
+| `/next` | Pick the next ready issue and start — project, issue, or initiative scope |
 | `/done` | Ship: ship-gate (diff review, tests, size-gated code review), PR, CI, confirmed squash-merge |
 | `/grind` | One autonomous cycle (pick → implement → ship), no prompts; wrap in `/loop` |
 | `/autopilot` | `/grind` restricted to issues labelled `auto-claude` — for an unsupervised instance |
@@ -117,6 +117,28 @@ The command set and workflow are identical; only the tracker calls differ.
 ---
 
 # Installation
+
+## Initiative mode and agents (Linear)
+
+`/next initiative "Name"` walks a Linear initiative's projects (In Progress first) and starts the highest-priority unblocked **Ready for build** issue, one branch per issue; ship it with `/done issue`. For issues touching more than ~3 files, the lead spawns read-only `context` agents, then at most one writer (`backend`, `frontend`, or `docs`). Install them with the commands:
+
+```bash
+mkdir -p /path/to/your/project/.claude/agents
+cp devloop/claude/agents/* /path/to/your/project/.claude/agents/
+```
+
+**See each agent in its own tmux pane** (optional). One-time, in `~/.claude/settings.json`, then restart Claude Code:
+
+```json
+{"env": {"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"}, "teammateMode": "auto"}
+```
+
+```bash
+tmux new -s devloop    # reattach later with: tmux attach -t devloop
+claude                 # run inside tmux, then /next initiative "Name"
+```
+
+`teammateMode` `"auto"` uses panes inside tmux or iTerm2 (needs the `it2` CLI and its Python API enabled) and runs agents in-process otherwise; `"tmux"` / `"iterm2"` force a backend. VS Code's terminal, Windows Terminal, and Ghostty are unsupported for split panes. Limits: one team per session, teammates start without the lead's history, token cost grows per agent.
 
 ## Linear installation
 

@@ -162,7 +162,7 @@ git pull
 
 ### 10. Close out
 
-**Issue:** the PR body's `Closes <ID>` moves the Linear issue on merge. If the integration does not close it, run `linear issue close <id>` as a fallback. If you used a worktree, show the cleanup command (`git worktree remove <path>`).
+**Issue:** the PR body's `Closes <ID>` moves the Linear issue on merge. If the integration does not close it, run `linear issue close <id>` as a fallback. If the `linear` CLI cannot resolve the ID ("Entity not found: Issue" — e.g. the issue's team isn't the CLI default, as with `/next initiative`), do the Linear reads and writes with the MCP tools instead: `mcp__claude_ai_Linear__get_issue`, `mcp__claude_ai_Linear__save_comment`, and `mcp__claude_ai_Linear__save_issue` with `state: "Done"` as the post-merge fallback. If you used a worktree, show the cleanup command (`git worktree remove <path>`).
 
 **Project:** `linear issues --project "<project>" --open` — if none remain, `linear project complete "<project>"`. If issues remain, list them and offer `/next project`.
 
@@ -170,6 +170,7 @@ git pull
 
 - One PR per branch from `/done`; use `/done project` after `/next project`, `/done issue` after `/next issue`
 - PR body **must** contain `Closes <ID>` for each issue (triggers Linear's GitHub integration)
+- `/done issue` ships a `/next initiative` pick too (same branch-per-issue flow)
 - Do **not** run `linear issue close` before merge — GitHub integration closes on merge
 - No commits → skip PR and note it
 - **Push rejected (both scopes):** follow the **github-cli** skill's "Push rejected (diverged history)" procedure. On conflict, stop, list files, tell the user to resolve and re-run `/done`. Never force-push.

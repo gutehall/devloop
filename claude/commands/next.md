@@ -10,6 +10,7 @@ Works for any type of issue — code, documents, decks, reviews, planning, ops t
 /next issue                # Issue mode (skip scope question)
 /next project "Phase 1"    # Named project
 /next issue ISSUE-12       # Specific issue
+/next initiative "Name"    # Next unblocked issue across a Linear initiative's projects
 ```
 
 ---
@@ -25,7 +26,7 @@ Unless the user already chose via `project` or `issue` in the command:
 Wait for the answer before continuing. Do not load issues or create branches until scope is confirmed.
 
 **Skip the question** when:
-- The command includes `project` or `issue` (e.g. `/next project`, `/next issue ISSUE-12`)
+- The command includes `project`, `issue`, or `initiative` (e.g. `/next project`, `/next issue ISSUE-12`, `/next initiative "Name"`)
 - The current branch clearly indicates mode: `<project-slug>-YYYY-MM-DD` → project; `TEAM-123-*` → issue
 
 ---
@@ -74,6 +75,69 @@ Branch name: `<project-slug>-YYYY-MM-DD` (derive slug from project name; max 40 
 Commit messages: `ISSUE-12: Short description`
 
 When ready to ship the project branch, tell the user to run `/done project`.
+
+---
+
+## Path: Initiative
+
+Pick the next unblocked **Ready for build** issue across all projects of a Linear initiative, then work it like issue mode (one branch, one PR). Requires an initiative name; none given → run `mcp__claude_ai_Linear__list_initiatives` and ask the user to pick.
+
+### Pick the issue
+
+1. **Team.** Use `.linear` `team=` (or the team of the initiative's issues if only one). Pass `team` on every Linear MCP query. Prefer MCP over the `linear` CLI for listing here — the CLI's default team may differ.
+2. **Projects, once:** `mcp__claude_ai_Linear__list_projects` with `initiative: "<name>"`, `fields: ["name", "status", "priority"]`. Drop Completed and Canceled. Order: In Progress first, then Planned, then Backlog; ties by priority, then list order.
+3. **Walk the projects in that order.** For each: `mcp__claude_ai_Linear__list_issues` with `team`, `project`, `state: "Ready for build"`, `fields: ["id", "title", "priority", "assignee"]`. **Ready for build only** — never fall back to other statuses.
+4. **Skip issues assigned to someone else.** Keep an issue only if unassigned or assigned to the current user (resolve once with `mcp__claude_ai_Linear__get_user` `query: "me"`). Print `skip <id> — assigned to <name>`. Do not filter by `assignee: "me"` in the query — that drops unassigned issues.
+5. **Skip blocked issues.** For each candidate, `mcp__claude_ai_Linear__get_issue` with `includeRelations: true`. For each `blockedBy` entry, `get_issue` with `fields: ["status", "statusType"]`. Blocked = any blocker not `completed`/`canceled`. Print `skip <id> — blocked by <blocker> (<status>)`.
+6. **Stop at the first project with an unblocked issue.** Do not load later projects once one yields a pick.
+7. **Pick the highest priority** there (urgent → high → medium → low → none), **assigned-to-me first**: if any unblocked candidate is yours, choose only among those; if none is, name the highest-priority unassigned candidate and ask (`AskUserQuestion`) whether to take it; on no, report blockers and stop. The `get_issue` from step 5 is the one read of the issue — do not fetch it again.
+
+No unblocked Ready issue anywhere → list blocked candidates and their blockers; suggest `/plan`.
+
+Announce:
+
+```
+Mode: Initiative (<name>)
+Project: <project> [In Progress]
+Working on: ISSUE-123 — <title> [high]
+Skipped: ISSUE-120 (blocked by ISSUE-118, In Progress)
+```
+
+### Initiative branch (code work)
+
+One branch per issue, in the current repo. Detect `<base>` once (origin HEAD branch, else `main`):
+
+```bash
+git checkout <base>
+git pull
+git checkout -b <gitBranchName from get_issue>
+git config --local push.autoSetupRemote true   # plain `git push` works on the new branch
+```
+
+Commit messages: `ISSUE-123: Short description`. PR body: `Closes ISSUE-123`.
+
+Set the issue In Progress with `mcp__claude_ai_Linear__save_issue` (`id`, `state: "In Progress"`, `assignee: "me"`) when you begin working it.
+
+**Then the project:** if the picked project's live status is Backlog or Planned, move it with `mcp__claude_ai_Linear__save_project` (`id`, `state: "In Progress"`) and print `Project <name>: <old> → In Progress`. Any other status → leave it. Only after work on the issue actually begins. Never move a project back; completion stays manual.
+
+Then run **Path A: Code Work** steps 2, 4, 5 (prior-work check, explore, implement) — or **Path B** for non-code issues (no branch). Implementation below.
+
+### Who implements (sub-agents)
+
+The lead (this session) implements by default. When the issue touches more than about 3 files:
+
+- Spawn one `context` agent per disjoint place (cap 3; one more round only if a returned pack lists a place under **Missing**). One agent per place; none roams.
+- Then the lead may spawn **one** specialist — `backend`, `frontend`, or `docs` — for the bulk of the change. No parallel writers.
+- Pass every agent the absolute checkout path, the issue ID and AC, and the conventions you read (agents do not inherit your conversation). Pass specialists the context packs and the files they may change.
+- **Lead only, no specialist:** issues labelled `risk:high`, `security`, or `billing`, and anything touching auth, credentials, payments, or data migrations.
+- The lead reviews the specialist's diff, then commits, pushes (`git push -u origin HEAD`), and updates Linear. Specialists never do.
+- Agent output is a lead, not proof — read cited spans before relying on them.
+
+**Watchable panes (tmux):** give every spawned agent a `name` (`context-<place>`, `backend`, `frontend`, `docs`). With agent teams enabled (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) and the session inside tmux (`teammateMode` `tmux` or `auto`), each named agent opens in its own pane so the user can follow it. Otherwise the same calls run as normal subagents — never fail or ask over missing panes.
+
+**Close panes:** named agents stay open and idle after they reply. Stop each with `TaskStop` (`task_id` = its `name`) as soon as it is done: each `context` agent once its pack is read, the specialist once its diff is reviewed. Before telling the user to run `/done issue`, confirm none is left running. Stopping a name that is already gone is fine.
+
+When ready to ship, tell the user to run `/done issue`.
 
 ---
 

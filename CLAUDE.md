@@ -18,6 +18,7 @@ Linear is the daily-driver variant. The Jira variant exists so teams on Jira can
 ```
 claude/
   commands/           # Slash command specs (.md prompt files loaded by Claude Code)
+  agents/             # Sub-agents for /next initiative (context, backend, frontend, docs)
   skills/             # Reusable skill modules referenced from commands
     linear-cli/       # Linear CLI reference and best practices
     github-cli/       # GitHub CLI reference (gh)
@@ -102,6 +103,7 @@ No test suite. Validate by installing commands in a test project and running the
 ```bash
 # Linear variant (core + situational skills)
 cp claude/commands/* /path/to/project/.claude/commands/
+cp claude/agents/* /path/to/project/.claude/agents/   # optional: /next initiative sub-agents
 for s in ship-gate linear-cli github-cli code-review prior-work product-planning diagnostic bugs debt deps release scope split sit; do
   cp -r "claude/skills/$s" /path/to/project/.claude/skills/
 done
