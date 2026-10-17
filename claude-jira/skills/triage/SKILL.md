@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Interactively triage Jira issues that are missing priority, labels, estimate, or type. Use this skill only for /triage or when the user explicitly asks to triage issues. Do not trigger proactively.
+description: Interactively triage Jira issues missing priority, labels, or estimate. Only /triage, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Issue Triage

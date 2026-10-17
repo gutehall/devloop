@@ -1,6 +1,6 @@
 ---
 name: estimate
-description: How to estimate issue complexity using t-shirt sizes — what signals map to what sizes, and when to flag for splitting. Used by /estimate.
+description: Estimate Jira issue complexity with t-shirt sizes and flag issues to split. Only /estimate, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Estimation

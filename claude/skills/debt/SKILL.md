@@ -1,6 +1,6 @@
 ---
 name: debt
-description: Scan the entire codebase for tech debt and create prioritized Linear issues tagged "tech-debt". Use this skill only for /debt or when the user explicitly asks to scan for tech debt. Do not trigger proactively.
+description: Scan the codebase for tech debt and create prioritized Linear issues tagged tech-debt. Only /debt, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Tech Debt Scanner

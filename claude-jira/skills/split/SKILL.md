@@ -1,6 +1,6 @@
 ---
 name: split
-description: How to decompose a large Jira issue into smaller, independently trackable child issues. Used by /split.
+description: Decompose a large Jira issue into smaller, independently trackable child issues. Only /split, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Issue Splitting

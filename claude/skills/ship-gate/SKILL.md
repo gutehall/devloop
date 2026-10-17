@@ -1,10 +1,6 @@
 ---
 name: ship-gate
-description: >
-  Shared pre-push quality gate (diff review, local verify, size-gated self-review)
-  used by /done, /pr, /grind, and /autopilot. Use only when a shipping command
-  says to follow the ship-gate skill, or the user explicitly says "run the quality
-  gate". Do not trigger proactively.
+description: Shared pre-push quality gate G1–G3 (diff review, local verify, self-review). Only /done, /pr, /grind, /autopilot, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Ship gate

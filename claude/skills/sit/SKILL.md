@@ -1,6 +1,6 @@
 ---
 name: sit
-description: Forces Claude Code to pause, reflect, and honestly assess whether the current approach is correct before continuing. Use this skill only when the user types "/sit" or says "sit", "pause and think", "wait, stop", "take a step back", "are you sure about this?", "rethink what you're doing", or a similarly explicit phrase. Do not trigger proactively. SIT is a reflective pause — not a summary of what was done, but an honest evaluation of whether the work is on the right track and what should happen next.
+description: Stop, Inspect, Think: honest mid-task check of whether the current approach is right. Only /sit, or when a command names this skill. Do not trigger proactively.
 ---
 
 # SIT Skill

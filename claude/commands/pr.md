@@ -1,6 +1,6 @@
 # /pr - Open a pull request for current work
 
-> **Project conventions:** follow the **ship-gate** skill's "Project conventions" rule (conventions skill → `CLAUDE.md`/`AGENTS.md`/`CONTRIBUTING.md` → detect from tooling).
+> **Project conventions:** (1) If this repo has a skill whose description says it defines coding rules, verify/test commands, or pre-merge gates — invoke it. (2) Else if `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` exists at the repo root (then the nearest subdirectory you are editing) — follow those. (3) Else continue.
 
 Creates a PR from the current branch. Use this when you want review before the work is fully done, or when you want to separate "open PR" from "close issue".
 
@@ -19,11 +19,11 @@ For completed work, prefer `/done` — it handles commit, push, PR, and offers `
 1. **Detect the issue ID** from branch name (`TEAM-123` pattern)
    - If not found: ask "Which issue does this branch belong to? (e.g. ISSUE-12)"
 
-2. **Detect `<base>` once** — follow the **ship-gate** skill's base-branch rule. Reuse `git log --oneline <base>..HEAD` and `git diff --stat <base>..HEAD` later in this run.
+2. **Detect `<base>` once** — `<base>` = origin HEAD branch (`git remote show origin | grep 'HEAD branch'`), else `main`; never `develop`. Reuse `git log --oneline <base>..HEAD` and `git diff --stat <base>..HEAD` later in this run.
 
 3. **Show work summary** (reuse the log/stat from step 2)
 
-4. **Quality gate** — follow the **ship-gate** skill in **interactive** mode (G1 commit, G2 verify, G3 size-gated review). `/pr --draft` / user wants a WIP PR: ship-gate allows pushing with `--draft` and stating failures in the body.
+4. **Quality gate** — follow the **ship-gate** skill in **interactive** mode (G1 commit, G2 verify, G3 size-gated review). `/pr --draft` / user wants a WIP PR: the gate allows pushing with `--draft` and stating failures in the body.
 
 5. **Push:**
    ```bash
@@ -53,7 +53,6 @@ Follow the **github-cli** skill's "Push rejected (diverged history)" procedure. 
 ## Notes
 
 - Body **must** contain `Closes <ID>` — this triggers Linear's GitHub integration
-- Base branch: follow ship-gate (origin HEAD, else `main`)
 - If a PR already exists for this branch (`gh pr view`), report the existing URL instead of creating a duplicate
 - Do NOT run `linear issue close` — GitHub integration moves the Linear issue when the PR merges
 - Follow the github-cli skill for PR body formatting

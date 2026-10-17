@@ -182,7 +182,7 @@ If ambiguous, ask: "Is this code work or non-code work?"
 ### Path A: Code Work
 
 1. Read description and acceptance criteria (issue stays in **Ready for build** while you read)
-2. **Prior-work check** — run the **prior-work** skill: has this already been solved (merged PR, existing code, open branch, or duplicate issue)? Default the code search to **1–3 targeted greps/globs on the main thread** (symbols/filenames from the AC). Do **not** spawn a locator subagent for a typical issue — that setup cost is why `/next` got expensive. Spawn at most **one** cheap locator (`cavecrew-investigator` if that type exists, else Task/Explore on Haiku) only when the issue is clearly a feature / multi-file change. Never spawn 2–3 in parallel here. This search doubles as explore — do not re-search in step 4 unless there are gaps. Before presenting a "shipped" or "duplicate" finding, verify the cited PR/commit/code yourself. Then present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit) before branching. Do not skip this.
+2. **Prior-work check** — follow the **prior-work** skill before branching; present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit).
 3. Set up the branch per scope (project or issue rules above)
 4. Explore relevant code — reuse step 2. No extra locators unless step 2 left a gap on a multi-file issue.
 5. Move the issue to **In Progress**, then implement (see **Who implements** below) — minimal solution, follow existing patterns. **Now** apply project conventions: if this repo has a conventions skill, invoke it; else follow root/nearest `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` if present. Do not load those during pick / prior-work / branch.
@@ -207,7 +207,7 @@ Applies to every scope (project, issue, initiative). The lead (this session) imp
 ### Path B: Non-Code Work
 
 1. Read description and acceptance criteria (issue stays in **Ready for build** while you read)
-2. **Prior-work check** — run the **prior-work** skill: does this deliverable (or a duplicate issue) already exist? If so, present the finding and ask the next step before producing anything new.
+2. **Prior-work check** — follow the **prior-work** skill; present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit) before producing anything new.
 3. Identify the deliverable
 4. Move the issue to **In Progress**, then help produce it
 5. When ready, tell the user to run `/done` with the same scope they used (`/done project` or `/done issue`)
@@ -235,9 +235,3 @@ If the user chooses "Product planning", ask what to focus on (backlog, features,
 2. All blocked → show blockers; offer `/plan`
 3. Empty backlog → offer Product planning or `/plan "..."`
 4. Linear not configured → say to run `linear login`
-
-## Notes
-
-- Scope question comes **before** loading work; branching is automatic from the repo default branch (`origin` HEAD, else `main`)
-- Set default project with `linear project open "<name>"` for faster project mode
-- Match `/done` scope to `/next` scope: `/done project` vs `/done issue`

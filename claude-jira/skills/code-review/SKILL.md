@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: How to review a pull request — what to look for, how to reason about quality, and how to communicate findings. Use for /review, ship-gate G3 on L/XL diffs, or when the user explicitly says "review this". Do not trigger proactively.
+description: Structured PR review: verify behavior, find logic errors and broken contracts, fix and re-test. Only /review, ship-gate G3, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Code Review

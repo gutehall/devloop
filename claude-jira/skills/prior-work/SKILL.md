@@ -1,124 +1,89 @@
 ---
 name: prior-work
-description: Before implementing a Jira issue, check whether the same work has already been done — a merged PR, existing code, an open branch, or a duplicate issue. Use only for /next, /grind, /autopilot, or an explicit "check prior work". Do not trigger proactively.
+description: Check whether a Jira issue is already done (merged PR, branch, code, duplicate) before branching. Only /next, /grind, /autopilot, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Prior-Work Check
 
-Before writing a line of code for an issue, find out whether the solution already exists. Catching "this is already done" or "this duplicates PROJ-X" before implementing saves a wasted cycle and a redundant PR.
+Run **after** reading the issue's description and acceptance criteria, **before** branching or implementing.
 
-Run this **after** reading the issue's description and acceptance criteria, **before** branching/implementing.
+## Outcomes
 
-## What "already done" means
+- **Shipped** — a merged PR closes this issue, or the code already meets the acceptance criteria in full.
+- **In flight** — an open PR or branch already references or implements this work.
+- **Duplicate** — another issue (open, in progress, or done) describes the same work.
+- **Partial** — a related solution exists that this work should extend, not rebuild.
+- **Clear** — no meaningful prior work.
 
-| Outcome | Evidence |
-|---------|----------|
-| **Shipped** | A merged PR already closes this issue, or the codebase already implements the acceptance criteria in full. |
-| **In flight** | An open PR or branch already references this issue / implements this work. |
-| **Duplicate** | Another issue describes the same work and is open, in progress, or done. |
-| **Partial** | A related solution exists that this work should extend, not rebuild from scratch. |
-| **Clear** | No meaningful prior work — proceed normally. |
+## Checks (run in parallel)
 
-## How to check
+Use the issue's key terms (feature name, files, symbols, error text).
 
-Run these in parallel; each is cheap. Use the issue's key terms (feature name, file/module names, symbols, error text).
-
-1. **PRs and branches referencing the issue**
+1. **PRs and branches**
    ```bash
-   gh pr list --state all --search "<ISSUE-KEY>"          # PR that closes it
-   gh pr list --state all --search "<key terms>"           # PR doing the same work
-   git branch -a --list "*<issue-key>*"                    # existing local/remote branch
+   gh pr list --state all --search "<ISSUE-KEY>"
+   gh pr list --state all --search "<key terms>"
+   git branch -a --list "*<issue-key>*"
    ```
-   The Jira GitHub dev panel also surfaces linked PRs — `jira issue view <key>` or the Atlassian MCP shows development links; a merged-PR link is the strongest "shipped" signal.
+   `jira issue view <key>` or the Atlassian MCP also shows development links — a merged-PR link is the strongest "shipped" signal.
+2. **Duplicate issues**
+   ```bash
+   jira issue list --resolution Unresolved --plain
+   ```
+   Or the Atlassian MCP issue search. Compare by summary and description; check existing **Duplicate** links. Near-identical Done → likely shipped; open → duplicate or parallel work.
+3. **Existing code** — 1–3 targeted greps/globs on the main thread (functions, routes, config keys, UI strings from the AC).
 
-2. **Duplicate or sibling issues**
-   Use the Atlassian MCP's issue-search tool (check available `mcp__claude_ai_Atlassian__*` tools for exact name) or `jira issue list` to pull candidates, then compare by summary/description (same signals the **dedupe** skill uses). A near-identical issue that's Done → likely shipped; one open/in-progress → duplicate or parallel work. Check existing **Duplicate** links on the issue too.
-
-3. **Existing implementation in the code**
-   Default: **1–3 targeted greps/globs on the main thread** (function names, routes, config keys, UI strings from the AC). Do **not** spawn a locator subagent for a typical issue — subagent setup cost dominates a small search, which is why `/next` got expensive.
-
-   Spawn at most **one** cheap locator (`cavecrew-investigator` if that type exists, else Task/Explore on Haiku) only when the caller already classified the issue as a feature / multi-file change. Never spawn 2–3 in parallel from this skill. Treat any receipt as a lead — read the cited span yourself.
-
-   If the feature is already present and meets the criteria, it's shipped (issue is stale). If part of it exists, it's partial — extend it.
-
-Keep the search proportional to the issue. A one-line fix needs a quick grep; a feature still starts with grep unless the caller classified it as multi-file.
+Locator rule: main-thread grep by default; at most one cheap locator, and only when the caller already classified the issue as feature / multi-file.
 
 ## Session cache
 
-Reuse results already fetched this session instead of re-running the same query:
-
-- `jira issue list --resolution Unresolved --plain` — reuse the last call's output for subsequent issues in the same `/next project` or `/grind` loop, as long as no issue status/comment was changed since (a status change invalidates the cache; re-run).
-- `gh pr list --state all --search "<key terms>"` — cache per distinct search term set within the session; a repeat issue with the same key terms (e.g. same feature area) can reuse it.
-- Don't cache across sessions — branch/PR state can change between runs.
-
-If unsure whether the cache is stale (state may have changed since the last fetch), re-run — a stale "no prior work" miss costs more than a redundant query.
+- `jira issue list --resolution Unresolved --plain` — reuse within the same `/next project` or `/grind` loop until an issue status or comment changes.
+- `gh pr list --state all --search "<key terms>"` — cache per distinct search-term set.
+- Do not cache across sessions.
+- If unsure whether the cache is stale, re-run.
 
 ## Judging the match
 
-Be precise, like in **dedupe** — a shared topic is not a duplicate. Test: would the prior work, as-is, satisfy this issue's acceptance criteria?
+Prior work counts only if, as-is, it satisfies this issue's acceptance criteria (fully → Shipped or In flight; partway → Partial). A shared topic is not a duplicate. Uncertain between partial and clear → treat as clear, and note what you found.
 
-- **Yes, fully** → Shipped.
-- **Yes, but still open/unmerged** → In flight.
-- **Another ticket covers it** → Duplicate.
-- **It gets you partway / is the right foundation** → Partial (extend).
-- **Only superficially related** → Clear; proceed.
+## Report
 
-When uncertain between "partial" and "clear", treat as clear and proceed — but note what you found.
-
-## Reporting
-
-Always report the finding before acting, with specifics:
+Verify the cited PR, commit, or code yourself before reporting it.
 
 ```
 Prior-work check — PROJ-12 "Add CSV export to billing"
-  Shipped?   PR #188 "Export invoices as CSV" merged 2026-05-30 — implements src/billing/export.ts
+  Shipped?   PR #188 "Export invoices as CSV" merged — implements src/billing/export.ts
   Duplicate? PROJ-29 (Done) covers the same export
-  → Looks already done. The acceptance criteria appear satisfied by existing code.
+  → Looks already done.
 ```
 
-If clear: `Prior-work check: no existing solution found. Proceeding.`
+Clear: `Prior-work check: no existing solution found. Proceeding.`
 
-## Acting on the finding
+## Interactive callers (/next)
 
-### Interactive callers (/next, /start) — ask the user
+Ask; do not decide:
 
 ```
 [Enter] Proceed anyway — implement as specified
 [c]     Close PROJ-12 as already done (link PR #188, transition to Done)
-[e]     Extend the existing solution — build on PR #188's code instead of starting fresh
+[e]     Extend the existing solution — build on PR #188's code
 [d]     Mark duplicate of PROJ-29 — collapse via the dedupe flow
 [q]     Quit
 ```
 
 - **Close:** `jira issue comment add <key> "Already done by PR #188."`, then `jira issue move <key> "Done"`.
-- **Extend:** point at the existing files/PR, then implement on top — reuse, don't rebuild.
+- **Extend:** implement on top of the existing files/PR.
 - **Duplicate:** hand off to the **dedupe** skill's collapse action (`jira issue link <dup> <canon> "Duplicate"` + close).
 
-### Autonomous callers (/grind, /autopilot) — never prompt, never auto-close
+## Autonomous callers (/grind, /autopilot)
 
-An unattended run must not guess that work is "done" and close it, nor reimplement something already shipped:
+Never prompt. Never auto-close.
 
-- **Shipped / Duplicate / In flight (strong match):** do **not** implement. Comment, then move it out of the queue for a human:
+- **Shipped / Duplicate / In flight** → do not implement:
   ```bash
   jira issue comment add <key> "Prior-work check: appears already done by PR #188 / duplicate of PROJ-29. Flagged for human review."
   jira issue move <key> "Backlog"
   jira issue edit <key> --label needs-human --no-input
   ```
-  Print `<caller>: <key> appears already solved (PR #188 / PROJ-29) — flagged needs-human, skipping.` Continue the loop; do not implement.
-- **Partial:** proceed, but build on the existing code — reuse the foundation, keep the change minimal, note in the PR body what was extended.
-- **Clear:** proceed normally.
-
-## Rules
-
-- Default code search: main-thread grep. Spawn a locator only for feature/multi-file issues, never more than one.
-- Run the check before branching/implementing — never after writing code.
-- Never auto-close an issue on an autonomous run; flag `needs-human` and skip instead.
-- A shared topic is not a duplicate — apply the dedupe precision test.
-- When extending prior work, reuse it; don't rebuild what already exists.
-- Report what you found even when proceeding — the finding is useful PR context.
-
-## Related skills
-
-- **dedupe** — detection signals and the collapse flow for true duplicate issues
-- **github-cli** — PR and branch search reference
-- **code-review** — verifying that existing code actually meets the acceptance criteria
+- **Partial** → extend the existing code; note what was extended in the PR body.
+- **Clear** → proceed.

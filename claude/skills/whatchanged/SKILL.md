@@ -1,6 +1,6 @@
 ---
 name: whatchanged
-description: Generate a management-facing progress report covering everything shipped since the last time the command was run. Use this skill only for /whatchanged or when the user explicitly asks for a management status report. Do not trigger proactively.
+description: Management-facing progress report of everything shipped since the last run. Only /whatchanged, or when a command names this skill. Do not trigger proactively.
 ---
 
 # What Changed — Management Report

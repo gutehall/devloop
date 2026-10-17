@@ -49,6 +49,7 @@ Project-specific rules (verify commands, coding standards, extra pre-merge gates
 Commands and skills are written so Claude pays for methodology only when it is invoked — not on every turn.
 
 - **Thin command routers.** `/sit` and `/diagnose` load their skill instead of pasting the protocol twice. `/done`, `/pr`, `/grind`, and `/autopilot` share a **ship-gate** skill for the pre-push quality gate (diff review, local verify, size-gated self-review).
+- **Name ship-gate only where G1–G3 runs.** Only a command that runs the gate (`/done`, `/pr`, `/grind`, `/autopilot`) names the **ship-gate** skill. `/plan` inlines the project-conventions rule and must not name ship-gate.
 - **Scoped skill descriptions.** Skill `description:` frontmatter is routing context on every turn. Methodology skills say **Do not trigger proactively** — they load on `/cmd` or an explicit ask, not on generic "fix this" / "review my code".
 - **Cheap subagents as leads.** `/diagnose`, `/bugs`, `/debt`, and ship-gate review use Haiku (or `cavecrew-investigator` / `cavecrew-reviewer`) for locate/review greps. `/next` does **not** — it greps on the main thread by default and only spawns a locator for feature/multi-file issues. Compressed `path:line` receipts are leads, not proof. Never spawn a full-size model just to find files.
 - **Size-gated code review.** Under 400 lines **and** under 8 files, verified cheap-reviewer leads *are* the review — the full `code-review` skill stays unloaded. Larger diffs load it.

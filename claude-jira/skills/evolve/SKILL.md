@@ -1,6 +1,6 @@
 ---
 name: evolve
-description: Plan the next version of an existing solution through a grounded, code-anchored design conversation. Use this skill only for /evolve or when the user explicitly asks to evolve a solution. Do not trigger proactively. Distinct from vision (long-horizon strategy) and think (single idea before reading code).
+description: Plan the next version of an existing solution through a code-anchored design conversation. Only /evolve, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Evolve Skill

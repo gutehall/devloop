@@ -1,6 +1,6 @@
 ---
 name: scope
-description: How to audit a Jira project or epic for gaps, unclear issues, and missing work. Used by /scope.
+description: Audit a Jira project for gaps, unclear issues, and missing work. Only /scope, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Scope Audit

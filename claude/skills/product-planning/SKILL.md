@@ -1,6 +1,6 @@
 ---
 name: product-planning
-description: Facilitate product thinking and structure work in Linear.
+description: Product thinking and structuring work into Linear projects and issues. Only /plan, /next, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Product Planning

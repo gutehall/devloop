@@ -1,131 +1,88 @@
 ---
 name: prior-work
-description: Before implementing a Linear issue, check whether the same work has already been done — a merged PR, existing code, an open branch, or a duplicate issue. Use only for /next, /grind, /autopilot, or an explicit "check prior work". Do not trigger proactively.
+description: Check whether a Linear issue is already done (merged PR, branch, code, duplicate) before branching. Only /next, /grind, /autopilot, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Prior-Work Check
 
-Before writing a line of code for an issue, find out whether the solution already exists. Catching "this is already done" or "this duplicates ISSUE-X" before implementing saves a wasted cycle and a redundant PR.
+Run **after** reading the issue's description and acceptance criteria, **before** branching or implementing.
 
-Run this **after** reading the issue's description and acceptance criteria, **before** branching/implementing.
+## Outcomes
 
-## What "already done" means
+- **Shipped** — a merged PR closes this issue, or the code already meets the acceptance criteria in full.
+- **In flight** — an open PR or branch already references or implements this work.
+- **Duplicate** — another issue (open, in progress, or done) describes the same work.
+- **Partial** — a related solution exists that this work should extend, not rebuild.
+- **Clear** — no meaningful prior work.
 
-Four outcomes, strongest evidence first:
+## Checks (run in parallel)
 
-| Outcome | Evidence |
-|---------|----------|
-| **Shipped** | A merged PR already closes this issue, or the codebase already implements the acceptance criteria in full. |
-| **In flight** | An open PR or branch already references this issue / implements this work. |
-| **Duplicate** | Another issue describes the same work and is open, in progress, or done. |
-| **Partial** | A related solution exists that this work should extend, not rebuild from scratch. |
-| **Clear** | No meaningful prior work — proceed normally. |
+Use the issue's key terms (feature name, files, symbols, error text).
 
-## How to check
-
-Run these in parallel; each is cheap. Use the issue's key terms (feature name, file/module names, symbols, error text from the description).
-
-1. **PRs and branches referencing the issue**
+1. **PRs and branches**
    ```bash
-   gh pr list --state all --search "<ISSUE-ID>"          # PR that closes it
-   gh pr list --state all --search "<key terms>"          # PR doing the same work
-   git branch -a --list "*<issue-id>*"                    # existing local/remote branch
+   gh pr list --state all --search "<ISSUE-ID>"
+   gh pr list --state all --search "<key terms>"
+   git branch -a --list "*<issue-id>*"
    ```
-   Also check the issue itself for linked PRs/attachments — `mcp__claude_ai_Linear__get_issue` returns links; a merged-PR link is the strongest "shipped" signal.
-
-2. **Duplicate or sibling issues**
+   `mcp__claude_ai_Linear__get_issue` also returns linked PRs — a merged-PR link is the strongest "shipped" signal.
+2. **Duplicate issues**
    ```bash
    linear issues --open
    ```
-   Compare target against other issues by title/description (same signals **dedupe** uses). A near-identical Done issue → likely shipped; open/in-progress → duplicate or parallel work.
+   Compare by title and description. Near-identical Done → likely shipped; open → duplicate or parallel work.
+3. **Existing code** — 1–3 targeted greps/globs on the main thread (functions, routes, config keys, UI strings from the AC).
 
-3. **Existing implementation in the code**
-   Default: **1–3 targeted greps/globs on the main thread** (function names, routes, config keys, UI strings from the AC). Do **not** spawn a locator subagent for a typical issue — subagent setup cost dominates a small search, which is why `/next` got expensive.
-
-   Spawn at most **one** cheap locator (`cavecrew-investigator` if that type exists, else Task/Explore on Haiku) only when the caller already classified the issue as a feature / multi-file change. Never spawn 2–3 in parallel from this skill. Treat any receipt as a lead — read the cited span yourself.
-
-   Feature already present and meets criteria → shipped (issue is stale). Part of it exists → partial, extend it.
-
-Keep the search proportional to the issue. A one-line fix needs a quick grep; a feature still starts with grep unless the caller classified it as multi-file.
+Locator rule: main-thread grep by default; at most one cheap locator, and only when the caller already classified the issue as feature / multi-file.
 
 ## Session cache
 
-Reuse results already fetched this session instead of re-running the same query:
-
-- `linear issues --open` / `linear issues --project "<project>"` — reuse the last call's output for subsequent issues in the same `/next project` or `/grind` loop, as long as no issue status/comment was changed since (a status change invalidates the cache; re-run).
-- `gh pr list --state all --search "<key terms>"` — cache per distinct search term set within the session; a repeat issue with the same key terms (e.g. same feature area) can reuse it.
-- Don't cache across sessions — branch/PR state can change between runs.
-
-If unsure whether the cache is stale (state may have changed since the last fetch), re-run — a stale "no prior work" miss costs more than a redundant query.
+- `linear issues --open` / `linear issues --project "<project>"` — reuse within the same `/next project` or `/grind` loop until an issue status or comment changes.
+- `gh pr list --state all --search "<key terms>"` — cache per distinct search-term set.
+- Do not cache across sessions.
+- If unsure whether the cache is stale, re-run.
 
 ## Judging the match
 
-Be precise, like **dedupe** — a shared topic is not a duplicate. Test: would the prior work, as-is, satisfy this issue's acceptance criteria?
+Prior work counts only if, as-is, it satisfies this issue's acceptance criteria (fully → Shipped or In flight; partway → Partial). A shared topic is not a duplicate. Uncertain between partial and clear → treat as clear, and note what you found.
 
-- **Yes, fully** → Shipped.
-- **Yes, but still open/unmerged** → In flight.
-- **Another ticket covers it** → Duplicate.
-- **Gets you partway / right foundation** → Partial (extend).
-- **Only superficially related** → Clear; proceed.
+## Report
 
-Uncertain between "partial" and "clear" → treat as clear and proceed, but note what you found.
-
-## Reporting
-
-Always report the finding before acting, with specifics:
+Verify the cited PR, commit, or code yourself before reporting it.
 
 ```
 Prior-work check — ISSUE-12 "Add CSV export to billing"
-  Shipped?   PR #188 "Export invoices as CSV" merged 2026-05-30 — implements src/billing/export.ts
+  Shipped?   PR #188 "Export invoices as CSV" merged — implements src/billing/export.ts
   Duplicate? ISSUE-29 (Done) covers the same export
-  → Looks already done. The acceptance criteria appear satisfied by existing code.
+  → Looks already done.
 ```
 
-Clear → say so in one line and continue: `Prior-work check: no existing solution found. Proceeding.`
+Clear: `Prior-work check: no existing solution found. Proceeding.`
 
-## Acting on the finding
+## Interactive callers (/next)
 
-### Interactive callers (/next, /start) — ask the user
-
-Present the finding and next-step options; don't decide unilaterally:
+Ask; do not decide:
 
 ```
 [Enter] Proceed anyway — implement as specified
 [c]     Close ISSUE-12 as already done (comment linking PR #188, set Done)
-[e]     Extend the existing solution — build on PR #188's code instead of starting fresh
+[e]     Extend the existing solution — build on PR #188's code
 [d]     Mark duplicate of ISSUE-29 — collapse via the dedupe flow
 [q]     Quit
 ```
 
 - **Close:** `mcp__claude_ai_Linear__save_comment` linking the prior work, then `linear issue update <id> --status "Done"`.
-- **Extend:** point at the existing files/PR, then implement on top — reuse, don't rebuild.
+- **Extend:** implement on top of the existing files/PR.
 - **Duplicate:** hand off to the **dedupe** skill's collapse action.
 
-### Autonomous callers (/grind, /autopilot) — never prompt, never auto-close
+## Autonomous callers (/grind, /autopilot)
 
-An unattended run must not guess that work is "done" and close it, nor reimplement something already shipped. So:
+Never prompt. Never auto-close.
 
-- **Shipped / Duplicate (strong match):** do **not** implement. Move the issue out of the ready queue for a human to confirm:
+- **Shipped / Duplicate / In flight** → do not implement:
   ```bash
   mcp__claude_ai_Linear__save_comment   # "Prior-work check: appears already done by PR #188 / duplicate of ISSUE-29. Flagged for human review."
   linear issue update <id> --status "Backlog" --label "needs-human"
   ```
-  Print `<caller>: <id> appears already solved (PR #188 / ISSUE-29) — flagged needs-human, skipping.` Continue the loop; don't implement.
-- **Partial:** proceed, but build on existing code — reuse the foundation, keep the change minimal, note in the PR body what was extended.
-- **In flight (open PR/branch by someone else):** don't stack a competing PR. Flag needs-human and skip, same as Shipped.
-- **Clear:** proceed normally.
-
-## Rules
-
-- Default code search: main-thread grep. Spawn a locator only for feature/multi-file issues, never more than one.
-- Run the check before branching/implementing — never after writing code.
-- Never auto-close an issue on an autonomous run; flag `needs-human` and skip instead.
-- A shared topic is not a duplicate — apply the dedupe precision test.
-- When extending prior work, reuse it; don't rebuild what already exists.
-- Report what you found even when proceeding — the finding is useful context for the PR.
-
-## Related skills
-
-- **dedupe** — detection signals and the collapse flow for true duplicate issues
-- **github-cli** — PR and branch search reference
-- **code-review** — verifying that existing code actually meets the acceptance criteria
+- **Partial** → extend the existing code; note what was extended in the PR body.
+- **Clear** → proceed.

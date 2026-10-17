@@ -140,7 +140,7 @@ If ambiguous, ask: "Is this code work or non-code work?"
 
 ### Path A: Code Work
 
-Read criteria (issue stays in **To Do** while reading), then run the **prior-work** skill — has this already been solved (merged PR, existing code, open branch, or duplicate issue)? Default the code search to **1–3 targeted greps/globs on the main thread**. Do **not** spawn a locator subagent for a typical issue. Spawn at most **one** cheap locator (`cavecrew-investigator` if that type exists, else Task/Explore on Haiku) only when the issue is clearly a feature / multi-file change. Never spawn 2–3 in parallel. Verify cited PR/commit/code yourself before close/skip. This search doubles as explore. If it finds a match, present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit) before branching. Then set up branch per scope, explore code (reuse prior-work results), move to **In Progress**, and implement minimally (see **Who implements** below). **Now** apply project conventions: if this repo has a conventions skill, invoke it; else follow root/nearest `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` if present. Do not load those during pick / prior-work / branch.
+Read criteria (issue stays in **To Do** while reading), then follow the **prior-work** skill before branching; present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit). Then set up branch per scope, explore code (reuse prior-work results), move to **In Progress**, and implement minimally (see **Who implements** below). **Now** apply project conventions: if this repo has a conventions skill, invoke it; else follow root/nearest `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` if present. Do not load those during pick / prior-work / branch.
 
 **Implementation rules:** read before coding; focused changes only; no unrelated refactors; check acceptance criteria; flag scope creep.
 
@@ -161,7 +161,7 @@ Applies to every scope (project, issue). The lead (this session) implements by d
 
 ### Path B: Non-Code Work
 
-Read criteria (issue stays in **To Do** while reading), then run the **prior-work** skill — does this deliverable (or a duplicate issue) already exist? If so, present the finding and ask the next step before producing anything. Then move to **In Progress** and produce the deliverable; run `/done project` or `/done issue` when ready. No git branch.
+Read criteria (issue stays in **To Do** while reading), then follow the **prior-work** skill; present the finding and ask (proceed / close as done / extend existing / mark duplicate / quit) before producing anything. Then move to **In Progress** and produce the deliverable; run `/done project` or `/done issue` when ready. No git branch.
 
 ---
 
@@ -184,9 +184,3 @@ If the user chooses "Product planning", ask what to focus on (backlog, features,
 2. All blocked → show blockers; offer `/plan`
 3. Empty backlog → offer Product planning or `/plan "..."`
 4. Jira not configured → say to run `jira init`
-
-## Notes
-
-- Scope question comes **before** loading work; branching is automatic from the repo default branch (`origin` HEAD, else `main`)
-- Match `/done` scope: `/done project` vs `/done issue`
-- `jira me` for self-assignment

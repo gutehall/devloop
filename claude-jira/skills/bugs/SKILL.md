@@ -1,6 +1,6 @@
 ---
 name: bugs
-description: Scan the entire codebase for bugs and create prioritized Jira issues. Use this skill only for /bugs or when the user explicitly asks to scan for bugs. Do not trigger proactively.
+description: Scan the codebase for bugs and create prioritized Jira issues. Only /bugs, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Bug Scanner

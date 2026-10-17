@@ -1,6 +1,6 @@
 # /plan - Inline product planning with Jira
 
-> **Project conventions:** follow the **ship-gate** skill's "Project conventions" rule (conventions skill → `CLAUDE.md`/`AGENTS.md`/`CONTRIBUTING.md` → detect from tooling) when drafting issues.
+> **Project conventions:** (1) If this repo has a skill whose description says it defines coding rules, verify/test commands, or pre-merge gates — invoke it. (2) Else if `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` exists at the repo root (then the nearest subdirectory you are editing) — follow those. (3) Else continue.
 
 Create Jira issues directly, without clipboard or intermediate steps.
 

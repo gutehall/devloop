@@ -11,10 +11,6 @@ Run bare (`/autopilot project`) to do exactly one cycle and stop.
 
 > **Safety contract:** the automated instance is configured to run **only** `/autopilot` — never `/grind` or `/next`. `/autopilot` never reads, branches from, comments on, transitions, or implements any issue that does not carry the `auto-claude` label. If it ever picks up an issue without the label, it **stops the loop** rather than proceeding.
 
-## Why this exists
-
-`/grind` will pick up any issue in the ready queue. For an unsupervised instance that is too broad — a human must be able to decide, per issue, "yes, the bot may do this one." The `auto-claude` label is that switch.
-
 ## How it runs
 
 **Follow `/grind` exactly** — same scope resolution, same cycle (pick → read → prior-work → branch → implement → ship-gate → ship → CI → return to base), same loop control, same self-paced timing. Apply these deltas:

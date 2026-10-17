@@ -1,9 +1,6 @@
 ---
 name: diagnostic-thinking
-description: >
-  Forces Claude to stop guessing and actually reason through what a problem could be before
-  attempting a fix. Use this skill only for /diagnose or when the user explicitly says
-  "root-cause this". Do not trigger on generic debugging/fix requests.
+description: Structured diagnosis: gather facts, form hypotheses, test, fix the confirmed root cause. Only /diagnose, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Diagnostic Thinking

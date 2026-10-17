@@ -9,10 +9,6 @@ One full development cycle in a single command: `/next` + implement + `/done`, w
 
 Run bare (`/grind project`) to do exactly one cycle and stop.
 
-## Why this exists
-
-`/next` and `/done` are interactive — they ask scope, work type, base branch. Under `/loop` those questions block forever. `/grind` resolves every decision automatically from branch + config, and where it cannot, it **stops the loop** instead of hanging or guessing.
-
 ---
 
 ## Scope (never ask)
@@ -68,7 +64,7 @@ Classify work type from title/description/labels:
 
 ### 2b. Prior-work check (before branching)
 
-Run the **prior-work** skill (autonomous mode) on the issue: is this already solved by a merged PR, existing code, an open branch/PR, or a duplicate issue? Default the code search to **1–3 targeted greps/globs on the main thread**. Do **not** spawn a locator subagent for a typical issue. Spawn at most **one** cheap locator (`cavecrew-investigator` if that type exists, else Task/Explore on Haiku) only when the issue is clearly a feature / multi-file change. Never spawn 2–3 in parallel. Treat any receipt as a lead — read the cited span yourself; discard leads that don't hold. This search doubles as explore — do not re-spawn locators unless those findings don't cover the area you're about to edit.
+Follow the **prior-work** skill in **autonomous** mode.
 
 - **Shipped / duplicate / in flight** → **SKIP** — never reimplement and never auto-close. Comment with what you found, then move it out of the queue for a human:
   ```bash
@@ -124,22 +120,10 @@ git push -u origin HEAD
 
 Push rejected → follow the **github-cli** skill's "Push rejected (diverged history)" procedure; **conflicts → STOP LOOP**, list files, never force-push.
 
-Create the PR — `Closes <ID>` in body (required for Linear integration) and a test plan with the **real results** from the pre-ship gate:
-```bash
-gh pr create --title "ISSUE-12: …" --body "$(cat <<'EOF'
-## Summary
+If a PR already exists (`gh pr view`), report that URL instead of creating another. Otherwise `gh pr create --title "..." --body "..."`:
+- **Title:** `ISSUE-12: <summary>` — one issue per PR, in both scopes
+- **Body sections:** `## Summary` (what changed and why; on a Partial prior-work result, what was extended); `## Test plan` (the real commands and results from the pre-ship gate — never an unchecked box); `Closes <ID>` (required for Linear integration)
 
-- What changed and why
-
-## Test plan
-
-- `<test command>` — <result>
-- `<build command>` — <result>
-
-Closes ISSUE-12
-EOF
-)"
-```
 Print PR URL.
 
 ### 7. CI + merge (never merge directly)

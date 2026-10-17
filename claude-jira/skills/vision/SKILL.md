@@ -1,6 +1,6 @@
 ---
 name: vision
-description: Deep strategic thinking about where a project is heading over 6-month to 1-year horizons. Use this skill only for /vision or when the user explicitly asks for a vision session. Do not trigger proactively.
+description: Strategic thinking about where a project is heading over 6–12 months. Only /vision, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Vision Skill

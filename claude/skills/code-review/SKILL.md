@@ -1,14 +1,6 @@
 ---
 name: code-review
-description: >
-  Performs a thorough, structured code review that goes beyond surface-level linting — it
-  validates that the code actually works as intended, finds logic errors, missing edge cases,
-  broken contracts between components, and anything that would cause the code to silently fail
-  or behave incorrectly. If issues are found, the skill produces a concrete fix plan and then
-  executes it, followed by test runs to confirm the fix holds. Use this skill for /review,
-  ship-gate G3 on L/XL diffs, or when the user explicitly says "review this", "review my code",
-  "check if this works", "does this look right", or "review before PR". Do not trigger
-  proactively — only on these explicit calls.
+description: Structured PR review: verify behavior, find logic errors and broken contracts, fix and re-test. Only /review, ship-gate G3, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Code Review

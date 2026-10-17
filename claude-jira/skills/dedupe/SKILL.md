@@ -1,6 +1,6 @@
 ---
 name: dedupe
-description: Scan a Jira project for duplicate and near-duplicate issues, cluster them, and walk the user through linking and closing them. Use this skill only for /dedupe or when the user explicitly asks to find duplicate issues. Do not trigger proactively.
+description: Find duplicate Jira issues, cluster them, and walk the user through resolving them. Only /dedupe, or when a command names this skill. Do not trigger proactively.
 ---
 
 # Duplicate Detection

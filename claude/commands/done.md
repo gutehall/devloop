@@ -1,6 +1,6 @@
 # /done - Complete work and ship
 
-> **Project conventions:** follow the **ship-gate** skill's "Project conventions" rule (conventions skill → `CLAUDE.md`/`AGENTS.md`/`CONTRIBUTING.md` → detect from tooling).
+> **Project conventions:** (1) If this repo has a skill whose description says it defines coding rules, verify/test commands, or pre-merge gates — invoke it. (2) Else if `CLAUDE.md`, `AGENTS.md`, or `CONTRIBUTING.md` exists at the repo root (then the nearest subdirectory you are editing) — follow those. (3) Else continue.
 
 Works for any type of issue — code, documents, decks, reviews, planning, ops tasks. Supports **project** mode (one PR for the whole project branch) or **issue** mode (one PR for a single issue).
 
@@ -42,7 +42,7 @@ Wait for the answer before pushing, creating a PR, or closing issues.
 
 ## Ship sequence (code work — both scopes)
 
-Mandatory quality gate before any push: follow the **ship-gate** skill in **interactive** mode (G1 commit, G2 verify, G3 size-gated review). Do not push until G1–G3 pass; their results feed the PR body. Where a step differs by scope it is split **Issue:** / **Project:** — otherwise it is identical for both.
+Mandatory quality gate before any push (step 4: G1 commit, G2 verify, G3 size-gated review). Do not push until G1–G3 pass; their results feed the PR body. Where a step differs by scope it is split **Issue:** / **Project:** — otherwise it is identical for both.
 
 ### 1. Identify what you're shipping
 
@@ -59,7 +59,7 @@ Union the In Progress issues with `TEAM-123` patterns from commit messages. If `
 
 ### 2. Detect base branch
 
-Follow the **ship-gate** skill's base-branch rule. Compute `<base>` once here and reuse it for every step below — do not re-derive it later in this run.
+`<base>` = origin HEAD branch (`git remote show origin | grep 'HEAD branch'`), else `main`; never `develop`. Compute it once here and reuse it for every step below — do not re-derive it later in this run.
 
 ### 3. Show work summary
 
@@ -72,7 +72,7 @@ Reuse this output later in this run instead of re-running it. **Project:** also 
 
 ### 4. Run the quality gate
 
-Follow the **ship-gate** skill in **interactive** mode. All three checks must pass before anything is pushed.
+Follow the **ship-gate** skill in **interactive** mode (G1 commit, G2 verify, G3 size-gated review). All three checks must pass before anything is pushed.
 
 ### 5. Push branch
 
@@ -82,50 +82,10 @@ git push -u origin HEAD
 
 ### 6. Create the PR
 
-If a PR already exists for this branch (`gh pr view`), report the existing URL instead of creating a duplicate. The test plan must contain the **real commands and results from G2** — never an unchecked checkbox. Print the PR URL immediately.
+If a PR already exists for this branch (`gh pr view`), report that URL instead of creating another. Otherwise `gh pr create --title "..." --body "..."` and print the PR URL immediately.
 
-**Issue** — title `ISSUE-12: Issue title`:
-
-```bash
-gh pr create --title "ISSUE-12: Issue title" --body "$(cat <<'EOF'
-## Summary
-
-- What changed and why
-
-## Test plan
-
-- `npm test` — 42 passed, 0 failed
-- `npm run build` — clean
-
-Closes ISSUE-12
-EOF
-)"
-```
-
-**Project** — title `<Project Name>: <short summary>`; one `Closes ISSUE-ID` per issue; add a Known issues section for unresolved Medium/Low findings from G3:
-
-```bash
-gh pr create --title "Phase 1: Caching and auth improvements" --body "$(cat <<'EOF'
-## Summary
-
-- What changed across the project
-
-## Issues closed
-
-Closes ISSUE-10
-Closes ISSUE-12
-
-## Test plan
-
-- `npm test` — 42 passed, 0 failed
-- `npm run build` — clean
-
-## Known issues
-
-- (Medium/Low findings from G3 not fixed in this PR, if any)
-EOF
-)"
-```
+- **Title:** issue `ISSUE-12: <summary>`; project `<Project>: <summary>`
+- **Body sections:** `## Summary` (what changed and why); `## Test plan` (the real G2 commands and results — never an unchecked box); one `Closes <ID>` per issue; `## Known issues` only for project scope (Medium/Low findings from G3 not fixed here)
 
 ### 7. Wait for CI
 
